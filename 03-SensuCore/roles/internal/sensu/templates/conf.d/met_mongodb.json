@@ -1,0 +1,18 @@
+
+
+{
+  "checks": {
+    "met_mongodb": {
+	"type": "metric",
+       "command": "metrics-mongodb.rb -h :::address:::",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-mongodb"
+        ],
+       "interval": 5,
+       "occurances": 20
+   }
+}
+}
+
+

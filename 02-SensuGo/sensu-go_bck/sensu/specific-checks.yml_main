@@ -1,0 +1,287 @@
+
+#check-mongodb
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check_mongo_ports
+  namespace: default
+spec:
+  command: check-ports.rb -H :::address::: -p27017
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - mongo
+
+#mongo-replication
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mysql-alive
+  namespace: default
+spec:
+ "command": "check-mysql-alive.rb -h :::mysql.host::: -P :::mysql.port::: -u :::mysql.user::: -p :::mysql.password::: -d :::mysql.database::: -s :::mysql.socket:::",
+  command: check-mysql-alive.rb  -h "10.7.0.5"  -p  "3306"
+  interval: 10
+  publish: true
+  runtime_assets:
+  - mysql
+  - sensu-ruby-runtime
+  subscriptions:
+  - mysql
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mysql-api
+  namespace: default
+spec:
+  command: check-http.rb -u https://taecu.mycariq.com/Cariq/tests/ping/mysql -q 'pong'
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - mysql
+
+
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mysql-status
+  namespace: default
+spec:
+ "command": "check-mysql-alive.rb -h :::mysql.host::: -P :::mysql.port::: -u :::mysql.user::: -p :::mysql.password::: -d :::mysql.database::: -s :::mysql.socket:::",
+  command: check-mysql-status.rb  -h "10.7.0.5"  -p  "3306"
+  interval: 10
+  publish: true
+  runtime_assets:
+  - mysql
+  - sensu-ruby-runtime
+  subscriptions:
+  - mysql
+
+
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-nginx
+  namespace: default
+spec:
+  command: check-nginx-status.rb
+  interval: 10
+  publish: true
+  runtime_assets:
+  - nginx
+  - sensu-ruby-runtime
+  subscriptions:
+  - nginx
+
+
+#---
+#type: CheckConfig
+#api_version: core/v2
+#metadata:
+#  name: check-nginx-running
+#  namespace: default
+#spec:
+#  #command: sensu-aggregate-check -H "127.0.0.1" -p "3306"
+#  command: check-ports.rb  -H  0.0.0.0  -p 80
+#  interval: 10
+#  publish: true
+#  runtime_assets:
+#  - network-check
+#  - sensu-ruby-runtime
+#  subscriptions:
+#  - nginx
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-nodejs-running
+  namespace: default
+spec:
+  command: check-ports.rb  -p "49999"
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - mysql
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-process-mongo-document-listerner
+  namespace: default
+spec:
+  command: check-process.rb -p check-process.rb -p /opt/babelfish/mongo/mongo-document-listerner.js -w85 -c90
+  interval: 10
+  publish: true
+  runtime_assets:
+  - process-cheks
+  - sensu-ruby-runtime
+  subscriptions:
+  - mongo
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-process-social
+  namespace: default
+spec:
+  command: check-process.rb -p /opt/social/src/index.js -w85 -c90
+  interval: 10
+  publish: true
+  runtime_assets:
+  - process-cheks
+  - sensu-ruby-runtime
+  subscriptions:
+  - social
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-process-thinkrace-parser
+  namespace: default
+spec:
+  command: check-process.rb -p /opt/babelfish/thinkrace/parser.js -w85 -c90
+  interval: 10
+  publish: true
+  runtime_assets:
+  - process-cheks
+  - sensu-ruby-runtime
+  subscriptions:
+  - process-thinkrace
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-process-thinkrace-receiver
+  namespace: default
+spec:
+  command: check-process.rb -p /opt/babelfish/thinkrace/receiver.js -w85 -c90
+  interval: 10
+  publish: true
+  runtime_assets:
+  - process-cheks
+  - sensu-ruby-runtime
+  subscriptions:
+  - process-thinkrace
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-socket
+  namespace: default
+spec:
+  command: check-socat.rb -h address  -p49999
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - socket
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-tomcat-api
+  namespace: default
+spec:
+  command: check-http.rb -u https://taecu.mycariq.com/Cariq/tests/testTimeout/1 -q 'miliSeconds'
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - tomcat
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-tomcat-running
+  namespace: default
+spec:
+  command: check-ports.rb  -H  0.0.0.0  -p 8080
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - tomcat
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mysql-port
+  namespace: default
+spec:
+  command: check-ports.rb -H "10.7.0.5"  -p "3306"
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - mysql
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-process
+  namespace: default
+spec:
+  command: check-process.rb -p  nginx
+  interval: 10
+  publish: true
+  runtime_assets:
+  - process-cheks
+  - sensu-ruby-runtime
+  subscriptions:
+  - specific
+
+
+
+
+

@@ -1,0 +1,14 @@
+---
+
+  - name: check the connectivity of the nodes in group
+    ping:
+
+  - name: install sensu-go-cli
+    yum:
+      name: sensu-go-cli
+      state: present
+
+  - name: configure sensu-go-cli
+    command: "sensuctl configure -n --username 'admin'  --password 'admin'  --namespace default  --url 'http://{{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}:8080' "
+    delegate_to: backend0
+

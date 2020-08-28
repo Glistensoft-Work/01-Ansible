@@ -1,0 +1,328 @@
+---
+type: CheckConfig
+metadata:
+  name: met-memory-used
+  namespace: default
+spec:
+  command: metrics-memory.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - memory-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-chrony
+  namespace: default
+spec:
+  command: metrics-chrony.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - chrony
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-mysql
+  namespace: default
+spec:
+  command: metrics-mysql-graphite.rb -h localhost  --port 3306 -S /var/lib/mysql/mysql.sock -u root --pass CiQ34358!
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - mysql
+  - sensu-ruby-runtime
+  subscriptions:
+  - mysql
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-cpu
+  namespace: default
+spec:
+  command: metrics-cpu.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - cpu
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-cpu-percentage
+  namespace: default
+spec:
+  command: metrics-cpu-pcnt-usage.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - cpu
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-disk
+  namespace: default
+spec:
+  command: metrics-disk.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - disk-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-interface
+  namespace: default
+spec:
+  command: metrics-interface.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-load
+  namespace: default
+spec:
+  command: metrics-load.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - load
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-memory-percentage
+  namespace: default
+spec:
+  command: metrics-memory-percent.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - memory-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-netif
+  namespace: default
+spec:
+  command: metrics-netif.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-net
+  namespace: default
+spec:
+  command: metrics-net.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-netstat
+  namespace: default
+spec:
+  command: metrics-netstat-tcp.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-nginx
+  namespace: default
+spec:
+  command: metrics-nginx.rb
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - nginx
+  - sensu-ruby-runtime
+  subscriptions:
+  - nginx
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-process-status
+  namespace: default
+spec:
+  command: metrics-process-status.rb -u root 
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - process
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-socket
+  namespace: default
+spec:
+  command: metrics-sockstat.rb -h localhost 
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+metadata:
+  name: met-uptime
+  namespace: default
+spec:
+  command: sensu-go-uptime-check
+  handlers: [influx-db,slack,email]
+  interval: 60
+  publish: true
+  output_metric_format: graphite_plaintext
+  output_metric_handlers:
+   - influx-db
+  runtime_assets:
+  - uptime
+  subscriptions:
+  - system
+
+

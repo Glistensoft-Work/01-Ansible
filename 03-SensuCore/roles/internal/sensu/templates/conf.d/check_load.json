@@ -1,0 +1,14 @@
+{
+ "checks": {
+   "check_load": {
+       "command": "check-load.rb",
+       "handlers": ["default","mailer"],
+       "subscribers": [
+            "check-load"
+        ],
+        "interval": 180,
+        "occurances": 20
+    }
+  }
+}
+

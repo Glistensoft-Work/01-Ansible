@@ -1,0 +1,281 @@
+---
+    - name: check the connectivity for client
+      ping:
+
+    - name: Create a login user as kafka with password kafka
+      user:
+       name: kafka
+       password: $6$6tfOx6NUPMUrT/ae$AhOm/IETFOslfQJaQj.tRBX92TVd2eJms2styvXkyAaeSzci7JdEv5PhS7hySAO65KPSvdVA2rzhB8mKthqDI/
+       groups:  wheel         # Empty by default.
+       state: present
+       shell: /bin/bash       # Defaults to /bin/bash
+       system: no             # Defaults to no
+       createhome: yes        # Defaults to yes
+       home: /home/kafka      # Defaults to /home/<username>  
+
+    #- name: ansible create Download  directory 
+    #  become: yes
+    #  become_user: kafka
+    #  file:
+    #   path:  ~/Downloads
+    #   state: directory   
+
+    #- name: Download file 
+    #  get_url:
+    #    url: http://apache.forsale.plus/kafka/2.4.0/kafka_2.13-2.4.0.tgz
+    #    dest: ~/Downloads/kafka.tgz
+
+    #- name: Extract the file
+    #  shell: "tar -xvzf ~/Downloads/kafka.tgz --strip 1"
+
+
+    - name: ansible create kafka directory 
+      file:
+       path:  ~/kafka
+       state: directory
+       owner: kafka
+       group: kafka
+       mode: '755'
+
+    - name: Execute the command 
+      shell: cd /home/kafka
+    
+    - name: Ansible check directory exists example.
+      stat:
+         path: /home/kafka/kafka/config/server.properties
+      register: files_to_delete
+   
+    - debug:
+          msg: "It is a directory"
+      when: files_to_delete.stat.exists and files_to_delete.stat.isdir
+
+    - name: fail if already run on host
+      fail: msg="This host has already had this playbook run against it"
+      when: files_to_delete.stat.exists
+
+    #- name: Fetch the file from the master to ansible
+    #  run_once: yes
+    #  fetch: src=/home/vagrant/Kafka/roles/Kafka/kafka  dest=/home/kafka  flat=yes
+    #  when: "{{ ansible_hostname == 'master'  }}"
+
+    - name: Copy the file from the ansible to nodes
+      copy: src=/home/vagrant/Kafka/roles/Kafka/kafka  dest=/home/kafka follow=no backup=yes
+      when: "{{ ansible_hostname != 'master'}}"
+
+    - name: localhost ip of ansible module running 
+      debug: var=hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] 
+      
+    - name: Add listner for the localhost 
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^#listeners=PLAINTEXT://:9092'
+        line: listeners=PLAINTEXT://{{hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]}}:9092
+
+    - name: Add advertised for the localhost 
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^#advertised.listeners=PLAINTEXT://your.host.name:9092'
+        line: advertised.listeners=PLAINTEXT://{{hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]}}:9092
+
+    - name: Configure server.properties file for kafka
+      lineinfile:
+         path: /home/kafka/kafka/config/server.properties
+         regexp: '{{item.From}}'
+         line: '{{item.To}}'
+         state: present
+      with_items:
+          - { From: ' ', To: 'delete.topic.enable = true'}
+          - { From: 'log.dirs=/tmp/kafka-logs', To: 'log.dirs=/home/kafka/kafka/kafka-logs'}
+ 
+    - lineinfile:
+         path: /home/kafka/kafka/config/server.properties
+         regexp: '^broker.id=0'
+         state: present
+         line: "broker.id={{groups['client'].index(inventory_hostname)}}"
+
+    - name: Configure zookeerper log file kafka current directory a zookeeper
+      lineinfile:
+         path: //home/kafka/kafka/config/zookeeper.properties
+         regexp: '{{item.From}}'
+         line: '{{item.To}}'
+         state: present
+      with_items:
+          - { From: 'dataDir=/tmp/zookeeper', To: 'dataDir=/home/kafka/kafka/zookeeper'}
+
+
+    - name: Ansible create systemctl   file for zookeeper service
+      file:
+       path: "/etc/systemd/system/zookeeper.service"
+       state: touch 
+
+    - name: Add content for zookeeper
+      copy:
+        dest: "/etc/systemd/system/zookeeper.service"
+        content: |
+                 [Unit]
+                 Requires=network.target remote-fs.target
+                 After=network.target remote-fs.target
+                 [Service]
+                 Type=simple
+                 User=kafka
+                 ExecStart=/home/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties
+                 ExecStop=/home/kafka/kafka/bin/zookeeper-server-stop.sh
+                 Restart=on-abnormal
+                 [Install]
+                 WantedBy=multi-user.target
+
+    - name: Create systemctl file for kafka service
+      file:
+       path: "/etc/systemd/system/kafka.service"
+       state: touch 
+
+    - name: Add content for kafka serivce file 
+      copy:
+        dest: "/etc/systemd/system/kafka.service"
+        content: |
+                 [Unit]
+                 Requires=zookeeper.service
+                 After=zookeeper.service
+                 [Service]
+                 Type=simple
+                 User=kafka
+                 ExecStart=/bin/sh -c '/home/kafka/kafka/bin/kafka-server-start.sh /home/kafka/kafka/config/server.properties > /home/kafka/kafka/kafka.log 2>&1'
+                 ExecStop=/home/kafka/kafka/bin/kafka-server-stop.sh
+                 Restart=on-abnormal
+                 [Install]
+                 WantedBy=multi-user.target 
+
+    - name: Name the node in /etc/host file 
+      copy:
+        dest: "/etc/hosts"
+        content: |
+               {{hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]}} server 1    
+
+    - name: Create Zookeeper firewall file 
+      file:
+       path: "/etc/firewalld/services/zooKeeper.xml"
+       state: touch 
+
+
+    - name: Add content for zookeeper firewall serivce
+      copy:
+        dest: "/etc/firewalld/services/zooKeeper.xml"
+        content: |
+                 <?xml version="1.0" encoding="utf-8"?>
+                 <service>
+                 <short>ZooKeeper</short>
+                 <description>Firewall rule for ZooKeeper ports</description>
+                 <port protocol="tcp" port="2888"/>
+                 <port protocol="tcp" port="3888"/>
+                 <port protocol="tcp" port="2181"/>
+                 </service>
+
+
+    - name: Create kafka  firewall file 
+      file:
+       path: "/etc/firewalld/services/kafka.xml"
+       state: touch 
+
+
+    - name: Add content for kafka firewall serivce
+      copy:
+        dest: "/etc/firewalld/services/kafka.xml"
+        content: |
+                 <?xml version="1.0" encoding="utf-8"?>
+                 <service>
+                 <short>Kafka</short>
+                 <description>Firewall rule for Kafka port</description>
+                 <port protocol="tcp" port="9092"/>
+                 </service>
+
+    - name: Add firewall rule for zookeeper as permanent
+      firewalld:
+        service: zooKeeper
+        permanent: yes
+        state: enabled
+
+    - name: Add firewall rule for kafka as permanent
+      firewalld:
+        service: kafka
+        permanent: yes
+        state: enabled
+
+    - name: Reload service httpd, in all cases
+      service:
+        name: firewalld
+        state: started
+
+    - name: upgrade all packages
+      yum:
+       name: '*'
+       state: latest
+
+    - name: Install java reuired   packages for kafka 
+      yum:
+        name: java-1.8.0-openjdk
+        state: latest
+
+    - name: Set JAVA_HOME path for kafka
+      lineinfile:
+        path:  /home/vagrant/.bash_profile
+        state: present
+        line: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.el7_7.x86_64/jre/bin/java
+
+    - name: create deploy template
+      template:
+          src: /home/vagrant/Kafka/roles/Kafka/Kafka_client/template/iplist.txt
+          dest: /home/vagrant/Kafka/roles/Kafka/Kafka_client/vars/ip.txt
+      when: "{{ ansible_hostname == 'master' }}"
+
+    - include_vars: /home/vagrant/Kafka/roles/Kafka/Kafka_client/vars/ip.txt
+
+    - name: Add ip for localhost  cluster in  kafka conf file at zookeeper.connect
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^zookeeper.connect=localhost:2181'
+        line: zookeeper.connect={{hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]}}
+
+    - name: Add synclimit in zookeeper conf file 
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: syncLimit=2
+
+    - name: Add initlimit in zookeerper conf file
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: initLimit=5
+
+    - name: Count number of node
+      debug: var=HOST_COUNT
+
+    - name: Add ip for zookeeper cluster
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: "{{hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]}}"
+      when: "{{ ansible_hostname != 'master' }}"
+
+
+    - name: Give permissions to an existing file
+      file:
+         path: /home/kafka/kafka/
+         owner: kafka
+         mode: '0755'
+         recurse: yes
+    
+    - name: Start service httpd, if not started
+      service:
+       name: zookeeper 
+       state: started
+
+    - name: Start service httpd, if not started
+      service:
+       name: kafka 
+       state: started
+
+ 

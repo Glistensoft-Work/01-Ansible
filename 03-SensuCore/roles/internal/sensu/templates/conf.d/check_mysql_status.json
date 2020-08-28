@@ -1,0 +1,13 @@
+{
+  "checks": {
+     "check_mysql_status": {
+        "command": "check-mysql-status.rb -h :::mysql.host::: -P :::mysql.port::: -u :::mysql.user::: -p :::mysql.password::: -d :::mysql.database::: -s :::mysql.socket::: ",
+        "handlers": ["default","mailer"],
+        "subscribers": [
+           "check-mysql-status"
+              ],
+        "interval": 60,
+        "occurances": 20
+      }
+  }
+}

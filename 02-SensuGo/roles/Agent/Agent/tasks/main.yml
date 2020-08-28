@@ -1,0 +1,147 @@
+---
+  - name: check the connectivity of the nodes in group
+    ping:
+
+#  - name: check if sensu-core client is absent 
+#    when: is_sensu-client_installed.stdout == "yes"
+
+  - name: Add the Sensu repository for client 
+    shell: curl -s   https://packagecloud.io/install/repositories/sensu/stable/script.rpm.sh | bash
+
+
+  - name: install sensu-go-agent
+    yum:
+      name: sensu-go-agent
+      state: present
+
+  - name: Add the Sensu client  confifuration file 
+    command: curl -L -k https://docs.sensu.io/sensu-go/latest/files/agent.yml -o /etc/sensu/agent.yml
+
+  - name: change ownership & permissions of directory with become
+    file:
+     path: /var/cache/sensu/sensu-agent
+     state: directory
+     owner: sensu
+     group: sensu
+
+  - name: Start service sensu-go-agent, if not started
+    service:
+      name:  sensu-agent.service
+      state: started
+    delegate_to: '{{ item }}'
+    with_items: "{{ groups['agents'] }}"
+ 
+  - name: Sensu Agent Configuration for name
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#name: "hostname"'
+      line: "name: Agent-{{groups['agents'].index(inventory_hostname)}}"
+
+
+  - name: Sensu Agent Configuration for namespace
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#namespace: "default"'	
+      line: 'namespace: "default"'
+
+  - name: Sensu Agent Configuration for enabling  backend url 
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#backend-url:'	
+      line: 'backend-url:'
+
+  - name: jinja  Template for  Agent 
+    template:
+       src: /home/users/mmaurya/Sensu-Go/roles/Agent/Agent/templates/server.j2
+       dest: /home/users/mmaurya/Sensu-Go/roles/Agent/Agent/vars/server.txt
+    delegate_to: 10.3.0.10
+#'{{ groups.agents[0] }}'
+ 
+
+  - name: Adding backend IP to the Agent
+    lineinfile:
+       path: /etc/sensu/agent.yml
+       regexp: '^#  - "ws://127.0.0.1:8081"'	  
+       line: "{{ lookup('file','/home/users/mmaurya/Sensu-Go/roles/Agent/Agent/vars/server.txt')}} "
+    #when: ansible_hostname != "master" 
+
+
+
+  - name: Sensu Agent Configuration for enabling  cache-dir
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#cache-dir: "/var/cache/sensu/sensu-agent"'	
+      line: 'cache-dir: "/var/cache/sensu/sensu-agent"'
+
+
+  - name: Sensu Agent Configuration for enabling  agent.yml
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#config-file: "/etc/sensu/agent.yml"'	
+      line: 'config-file: "/etc/sensu/agent.yml"'
+
+  - name: Sensu Agent Api Configuration 
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#api-host: "127.0.0.1"'	
+      line: "api-host: {{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}"
+
+
+  - name: Sensu Agent Configuration for enabling api port 
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#api-port: 3031'	
+      line: 'api-port: 3031'
+
+
+  - name: Sensu Agent Authenticatio user Configuration 
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#user: "agent"'	
+      line: 'user: "admin"'
+
+  - name: Sensu Agent Authenticatio password  Configuration 
+    lineinfile:
+      path: /etc/sensu/agent.yml
+      state: present
+      regexp: '^#password: "P@ssw0rd!"'	
+      line: 'password: "admin"'
+
+  - name: Sensu Agent Authenticatio password  Configuration 
+    blockinfile:
+      dest: /etc/sensu/agent.yml
+      block: | 
+              subscriptions:
+                 - system
+                 - nginx
+               #  - mysql
+               #  - fos
+               #  - mongo
+               #  - social
+               #  - socket
+               #  - tomcat
+               #  - nodejs
+               #  - socket
+               #  - zk
+               #  - zk-consumer-process
+               #  - crawler
+               #  - verification
+               #  - ttl
+               #  - fd
+
+
+#  - name: Copy Remote-To-Remote (from serverA to serverB)
+#    copy:
+#       src : /home/users/mmaurya/Sensu-Go/roles/Agent/Agent/templates/custom-checks
+#       dest: /var/cache/sensu
+#    delegate_to: '{{ item }}'
+#    with_items: "{{ groups['agents'] }}"
+

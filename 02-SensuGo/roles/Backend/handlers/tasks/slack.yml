@@ -1,0 +1,17 @@
+---
+api_version: core/v2
+type: Handler
+metadata:
+  namespace: default
+  name: slack
+spec:
+  type: pipe
+  #change channel name 
+  command: sensu-slack-handler --channel '#sdk'
+  #timeout: 10
+  env_vars: 
+    #change this as per slack channel workspace
+  - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T0000/B000/XXXXXXXX 
+  runtime_assets:
+  - sensu-slack-handler
+

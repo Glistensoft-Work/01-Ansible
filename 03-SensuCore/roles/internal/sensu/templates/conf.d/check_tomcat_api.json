@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "check_tomcat_api": {
+       "host": "soft-admin",
+       "command": "check-http.rb -u https://taecu.mycariq.com/Cariq/tests/testTimeout/1 -q 'miliSeconds'",
+       "handlers": ["default","mailer"],
+       "subscribers": [
+            "check-tomcat-api"
+        ],
+       "interval": 30,
+       "occurances": 20
+   }
+}
+}
+

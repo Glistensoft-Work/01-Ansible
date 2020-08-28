@@ -1,0 +1,10 @@
+---
+- name: Install & configure Sensu-Go
+  gather_facts: True
+  become: True
+  become_method: sudo
+  become_user: root
+  hosts: agents
+  roles:
+   - { role: Agent,               tags: ['Agent'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   

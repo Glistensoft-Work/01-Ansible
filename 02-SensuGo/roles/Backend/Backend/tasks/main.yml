@@ -1,0 +1,108 @@
+---
+  - name: check the connectivity of the nodes in group
+    ping:
+
+#  - name: check if sensu-core client is absent 
+#    when: is_sensu-client_installed.stdout == "yes"
+
+  - name: Ansible check directory exists.
+    stat:
+      path: /etc/sensu/backend.yml
+    register: files_to_delete
+
+  - debug:
+         msg: "It is a directory"
+    when: files_to_delete.stat.exists and files_to_delete.stat.isdir
+
+#  - name: fail if already run on host
+#    fail: msg="This host has already had this playbook run against it"
+#    when: files_to_delete.stat.exists
+
+  - name: Add the Sensu repository for backend
+    shell: curl -s https://packagecloud.io/install/repositories/sensu/stable/script.rpm.sh | sudo bash
+
+  - name: install sensu-go-backend
+    yum:
+      name: sensu-go-backend
+      state: present
+
+  - name: Add the Sensu  backend configuration file 
+    shell: sudo curl -L -k https://docs.sensu.io/sensu-go/latest/files/backend.yml -o /etc/sensu/backend.yml
+
+  - name: change ownership & permissions of directory with become
+    file:
+     path: /var/cache/sensu/sensu-backend
+     state: directory
+     owner: sensu
+     group: sensu
+    
+  - name: Start service sensu-go-backend, if not started
+    service:
+      name:  sensu-backend.service
+      state: started
+
+  - name: Sensu Backend Configuration for cache-dir  
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      regexp: '^#cache-dir: "/var/cache/sensu/sensu-backend"'
+      line: 'cache-dir: "/var/cache/sensu/sensu-backend"'
+
+  - name: Sensu Backend Configuration to include backend.yml
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      regexp: '^#config-file: "/etc/sensu/backend.yml"'
+      line: 'config-file: "/etc/sensu/backend.yml"'
+
+  - name: Sensu Backend Configuration for agent  ip 
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      line: "agent-host: {{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }} # listen on all IPv4 and IPv6 addresses"
+
+
+  - name: Sensu Backend Configuration for agent  port
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      regexp: '^#agent-port: 8081'
+      line: 'agent-port: 8081'
+
+  - name: Add Ip Address to run  sensun api listen
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      line: "api-listen-address: {{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}:8080  # listen on all IPv4 and IPv6 addresses"
+
+
+  - name: Sensu Backend Configuration for api url
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      regexp: '^#api-url: "http://localhost:8080"'
+      line: "api-url: http://{{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}:8080"
+
+  - name: Add Ip Address to run  sensun web UI
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      regexp: '^#dashboard-host: "[::]" # listen on all IPv4 and IPv6 addresses'
+      line: "dashboard-host: {{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}  # listen on all IPv4 and IPv6 addresses"
+
+
+  - name: Sensu Backend web ui Configuration   port
+    lineinfile:
+      path: /etc/sensu/backend.yml
+      state: present
+      regexp: '^#dashboard-port: 3000'
+      line: 'dashboard-port: 3000'
+
+
+  - name: Inform restart handler that we are in charge of the backend service
+    set_fact:
+      manage_sensu_backend_service: true
+
+
+  - name: Start the backend
+    include_tasks: start.yml 

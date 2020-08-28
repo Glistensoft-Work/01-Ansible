@@ -1,0 +1,26 @@
+failed_count=$(mysql cariq -u root -pCiQ34358! -se "select name, status from work_item where status = 'FAILED' && start_time >= now() - interval 5 minute")
+#echo "$failed_count" | wc -l
+#echo $failed_count
+
+count=$(echo -n "$failed_count" | grep -c '^')
+
+#echo $count
+
+if [[ $count == 0 ]]; then
+  echo "OK: Crawler failed count is in last 5 minutes: $count"
+  exit 0
+else
+  if [[ $count != 0 ]]; then
+    echo "WARNING: Crawler failed count is in last 5 minutes: $count"
+    echo "$failed_count"
+    exit 1
+  else
+    echo "Critical: Server unreachbale"
+    exit 2
+  fi
+fi
+
+echo "Unknown: Something went wrong"
+exit 3 # or higher
+
+

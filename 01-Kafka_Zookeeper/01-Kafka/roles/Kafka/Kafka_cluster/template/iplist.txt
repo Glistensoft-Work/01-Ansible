@@ -1,0 +1,5 @@
+main_nodes_ips_with_port_zk: "{{ groups['client'] | map('extract', hostvars, ['ansible_ssh_host']) | join(' :2181')}}2181"
+main_nodes_ips: "{{ groups['client'] | map('extract', hostvars, ['ansible_ssh_host']) | join('      ')}}         "
+main_nodes_ips_with_portkf: "{{ groups['client'] | map('extract', hostvars, ['ansible_ssh_host']) | join('  :2888:3888,')}}2888:3888"
+HOST_COUNT: "{{ ansible_play_hosts | length }}"
+

@@ -1,0 +1,61 @@
+---
+   - name: create asset for sensu-plugins-cpu-checks
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-cpu-checks -r cpu
+    # delegate_to: backend0
+
+   - name: create asset for sensu-plugins-chrony
+     shell: sensuctl asset add jBRNDnl/sensu-plugins-chrony -r chrony
+
+   - name: create asset for sensu-plugins-disk-checks
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-disk-checks -r disk-checks
+ 
+   - name: create asset for sensu-email-handler
+     shell: sensuctl asset add sensu/sensu-email-handler -r email-handler
+
+   - name: create asset for sensu-plugins-filesystem-checks
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-filesystem-checks -r file 
+
+   - name: create asset for sensu-plugins-plugins-http
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-http -r http
+
+   - name: create asset for sensu-plugins-influxdb-handler
+     shell: sensuctl asset add sensu/sensu-influxdb-handler -r influxdb-handler
+
+   - name: create asset for sensu-plugins-load
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-load-checks -r load
+
+   - name: create asset for sensu-memory-checks
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-memory-checks -r memory-checks
+
+   - name: create asset for sensu-plugin-mongodb
+     shell: sensuctl asset add boutetnico/sensu-plugins-mongodb -r mongodb
+
+   - name: create asset for sensu-monitoring-plugin
+     shell: sensuctl asset add sensu/monitoring-plugins -r monitoring
+
+   - name: create asset for sensu-plugin-mysql
+     shell: sensuctl asset add boutetnico/sensu-plugins-mysql -r mysql
+
+   - name: create asset for sensu-network-checks
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-network-checks -r network-check
+
+   - name: create asset for sensu-plugins-nginx
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-nginx -r nginx
+
+   - name: create asset for sensu-plugins-process
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-process-checks -r process-checks 
+
+   - name: create asset for sensu-ruby-runtime
+     shell: sensuctl asset add sensu/sensu-ruby-runtime -r sensu-ruby-runtime 
+
+   - name: create asset for sensu-slack-handler
+     shell: sensuctl asset add sensu/sensu-slack-handler -r sensu-slack-handler
+ 
+   - name: create asset for sensu-plugin-snmp
+     shell: sensuctl asset add sensu-plugins/sensu-plugins-snmp -r snmp 
+
+   - name: create asset for sensu-uptime-checks
+     shell: sensuctl asset add asachs01/sensu-go-uptime-check -r uptime 
+
+
+

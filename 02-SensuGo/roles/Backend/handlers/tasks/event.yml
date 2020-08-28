@@ -1,0 +1,16 @@
+---
+type: EventFilter
+api_version: core/v2
+metadata:
+  annotations: null
+  labels: null
+  name: All
+  namespace: default
+spec:
+  action: allow
+  expressions:
+#  - event.check.occurrences == 0
+  - event.check.occurrences == 1
+  - event.check.occurrences == 2
+  runtime_assets: []
+

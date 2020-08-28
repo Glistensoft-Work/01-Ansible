@@ -1,0 +1,17 @@
+---
+api_version: core/v2
+type: Handler
+metadata:
+  namespace: default
+  name: email
+spec:
+  type: pipe
+  command: sensu-email-handler -f sshukla@mycariq.com  -t cloud-infra@mycariq.com  -s smtp.office365.com  -u sshukla@mycariq.com  -p 7Gaurav97!
+  timeout: 10
+  filters:
+  - is_incident
+  - not_silenced
+  - state_change_only
+  runtime_assets:
+  - email-handler
+

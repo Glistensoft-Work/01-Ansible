@@ -1,0 +1,614 @@
+---
+    - name: check the connectivity of the nodes in group 
+      ping:
+
+    - name: create deploy template
+      template:
+          src: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/template/iplist.txt
+          dest: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/ip.txt
+      when: "{{ ansible_hostname == 'master' }}"
+
+    - include_vars: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/ip.txt
+ #  - include_vars: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/server.txt
+
+    - name: Create a login user as kafka with password kafka
+      user:
+       name: kafka
+       password: $6$6tfOx6NUPMUrT/ae$AhOm/IETFOslfQJaQj.tRBX92TVd2eJms2styvXkyAaeSzci7JdEv5PhS7hySAO65KPSvdVA2rzhB8mKthqDI/
+       groups:  wheel         # Empty by default.
+       state: present
+       shell: /bin/bash       # Defaults to /bin/bash
+       system: no             # Defaults to no
+       createhome: yes        # Defaults to yes
+       home: /home/kafka      # Defaults to /home/<username>  
+
+    - name: ansible create kafka directory 
+      become: yes
+      become_user: kafka
+      file:
+       path:  ~/kafka
+       state: directory
+       owner: kafka
+       group: kafka
+       mode: '755'
+
+    # - name: upgrade all packages
+    #    yum:
+    #     name: '*'
+    #     state: latest
+
+   # - name: Install java reuired   packages
+   #   yum:
+   #     name: java-1.8.0-openjdk
+   #     state: latest
+
+    - name: Set JAVA_HOME path for kafka
+      lineinfile:
+        path:  /home/vagrant/.bash_profile
+        state: present
+        line: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.el7_7.x86_64/jre/bin/java
+ 
+    - name: Change the Directory to kafka  
+      shell: cd /home/kafka
+
+    - name: Ansible check directory exists.
+      stat:
+         path: /home/kafka/kafka/config/server.properties
+      register: files_to_delete
+
+    - debug:
+          msg: "It is a directory"
+      when: files_to_delete.stat.exists and files_to_delete.stat.isdir
+
+  #  - name: fail if already run on host
+  #    fail: msg="This host has already had this playbook run against it"
+  #    when: files_to_delete.stat.exists
+
+    - name: Fetch the file from the master to ansible
+      run_once: yes
+      fetch: src=/home/vagrant/Kafka/roles/Kafka/kafka  dest=/home/kafka  flat=yes
+      when: "{{ ansible_hostname == 'master' }}"
+
+   # - name: Copy the file from the ansible to nodes
+   #   copy: src=/home/vagrant/Kafka/roles/Kafka/kafka  dest=/home/kafka
+   #   when: "{{ ansible_hostname != 'master' }}"
+  
+    - name: Give permissions to an existing file
+      file:
+         path: /home/kafka/kafka/
+         owner: kafka
+         mode: '0755'
+         recurse: yes
+
+    - name: localhost ip of ansible module running 
+      debug: var=hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] 
+      
+    - name: Add listner for the each node in cluster
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^#listeners=PLAINTEXT://:9092'
+        line: listeners=PLAINTEXT://node-{{groups['client'].index(inventory_hostname)}}:9092
+
+    - name: Add advertised for each node in cluster
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^#advertised.listeners=PLAINTEXT://your.host.name:9092'
+        line: advertised.listeners=PLAINTEXT://node-{{groups['client'].index(inventory_hostname)}}:9092
+
+    - name: Configure kafka server.properties file for each node in group 
+      lineinfile:
+         path: /home/kafka/kafka/config/server.properties
+         regexp: '{{item.From}}'
+         line: '{{item.To}}'
+         state: present
+      with_items:
+          - { From: ' ', To: 'delete.topic.enable = true'}
+          - { From: 'log.dirs=/tmp/kafka-logs', To: 'log.dirs=/home/kafka/kafka/kafka-logs'}
+ 
+    - name: Assign broker id to nodes
+      lineinfile:
+         path: /home/kafka/kafka/config/server.properties
+         regexp: '^broker.id=0'
+         state: present
+         line: "broker.id={{groups['client'].index(inventory_hostname)}}"
+
+    - name: Add ip of each node  for cluster  in kafka conf file  at zookeeper.connect
+      vars:
+         comment: ':2181'
+      lineinfile:
+        dest: /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^(zookeeper.connect=(.*)$)'
+        backrefs: yes
+        line: '\1,{{item}}{{comment}}'
+      when:  ansible_hostname != "item"
+     #loop: "{{ query('inventory_hostnames', 'all') }}"
+   
+
+    #- name: Add ip of each node  for cluster  in kafka conf file  at zookeeper.connect
+    #  lineinfile:
+    #    path:  /home/kafka/kafka/config/server.properties
+    #    state: present
+    #    regexp: '^zookeeper.connect=localhost:2181'
+    #    line: zookeeper.connect=node-{{groups['client'].index(inventory_hostname)}}:2181
+    #when: "{{ ansible_hostname != 'master' }}"
+
+
+    - name: Ansible create systemctl file for zookeeper service
+      file:
+       path: "/etc/systemd/system/zookeeper.service"
+       state: touch 
+
+    - name: Add content for zookeeper service file 
+      copy:
+        dest: "/etc/systemd/system/zookeeper.service"
+        content: |
+                 [Unit]
+                 Requires=network.target remote-fs.target
+                 After=network.target remote-fs.target
+                 [Service]
+                 Type=simple
+                 User=kafka
+                 ExecStart=/home/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties
+                 ExecStop=/home/kafka/kafka/bin/zookeeper-server-stop.sh
+                 Restart=on-abnormal
+                 [Install]
+                 WantedBy=multi-user.target
+
+    - name: Create  systemctl file for kafka service
+      file:
+       path: "/etc/systemd/system/kafka.service"
+       state: touch 
+
+    - name: Add content for kafka serivce
+      copy:
+        dest: "/etc/systemd/system/kafka.service"
+        content: |
+                 [Unit]
+                 Requires=zookeeper.service
+                 After=zookeeper.service
+                 [Service]
+                 Type=simple
+                 User=kafka
+                 ExecStart=/bin/sh -c '/home/kafka/kafka/bin/kafka-server-start.sh /home/kafka/kafka/config/server.properties > /home/kafka/kafka/kafka.log 2>&1'
+                 ExecStop=/home/kafka/kafka/bin/kafka-server-stop.sh
+                 Restart=on-abnormal
+                 [Install]
+                 WantedBy=multi-user.target 
+
+
+    - name: add IP address of all hosts to /etc/hosts
+      vars:
+       comment: '# added by ansible'
+      lineinfile:
+        dest: /etc/hosts
+        regexp: ".* {{ item }} {{ comment }}"
+        line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }} {{ item }} {{ comment }}"
+        state: present
+        backup: yes
+      when: ansible_hostname != item
+      loop: "{{ query('inventory_hostnames', 'all') }}"
+ 
+   
+    - name: Configure zookeeper.properties file to change the log directory  
+      lineinfile:
+         path: //home/kafka/kafka/config/zookeeper.properties
+         regexp: '{{item.From}}'
+         line: '{{item.To}}'
+         state: present
+      with_items:
+          - { From: 'dataDir=/tmp/zookeeper', To: 'dataDir=/home/kafka/kafka/zookeeper/data'}
+
+    - name: Ansible Template for zookeeper cluser node 
+      template:
+        src: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/template/server.j2 
+        dest: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/server.txt
+      delegate_to: 192.168.0.107
+
+    - name: Copy zookeeper cluster info to node zookeeper  conf  file 
+      lineinfile:
+        path: /home/kafka/kafka/config/zookeeper.properties
+        regexp: "^{{ lookup('file', '/home/kafka/kafka/config/zookeeper.properties') }}"
+        line: "{{ lookup('file','/home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/server.txt')}}{{ lookup('file', '/home/kafka/kafka/config/zookeeper.properties') }}"
+      when: ansible_hostname != "master"
+ 
+   # - name: Add ip for  clustering of  zookeeper in  conf file 
+   #   vars:
+   #     comment: ':2888:3888'
+   #   lineinfile:
+   #     dest: /home/kafka/kafka/config/zookeeper.properties
+   #     #regexp: ".*{{ item }}"
+   #     line:  "server.{{ item }}={{ item }}{{ comment }}"
+   #     state: present
+   #     backup: yes
+   #   when: ansible_hostname != item
+   #  loop: "{{ query('inventory_hostnames', 'all') }}"
+   
+    #- name: Add ip for zookeeper cluster
+    #  lineinfile:
+    #    path: /home/kafka/kafka/config/zookeeper.properties
+    #    state: present
+    #    line: "{{main_nodes_ips_with_port_zk}}"
+    #  when: "{{ ansible_hostname != 'master' }}"
+
+    - name: Add synclimit in zookeeper conf file 
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: syncLimit=2
+
+    - name: Add initlimit in zookeerper conf file
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: initLimit=5
+
+    - debug:
+        msg: Chnage synclimit and initlimit  as per the reuirement
+
+    - name: Start service zookeeper, if not started
+      service:
+       name: zookeeper 
+       state: restarted
+
+    - stat: path=/home/kafka/kafka/zookeeper/myid
+      register: p
+
+    - name: create file myid
+      file: path=/home/kafka/kafka/zookeeper/data/myid
+        owner=kafka
+        mode=0755
+        state={{ "file" if  p.stat.exists else "touch"}}
+
+    - name: Add broker id /unique id for each server
+      lineinfile:
+        path: /home/kafka/kafka/zookeeper/data/myid 
+        state: present
+        line: "{{groups['client'].index(inventory_hostname)}}"
+
+
+    - name: Start service kafka, if not started
+      service:
+       name: kafka 
+       state: restarted  
+   
+    - name: Count number of node
+      debug: var=HOST_COUNT
+
+
+   # - name: Update the /etc/hosts file with node name
+   #   tags: etchostsupdate
+   #   become: yes
+   #   become_user: root
+   #   lineinfile:
+   #     path: "/etc/hosts"
+   #     regexp: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t\t{{ hostvars[item]['ansible_hostname']}}"
+   #     line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t\tserver{{groups['client'].index(inventory_hostname)}}"
+   #     state: present
+   #     backup: yes
+   #   register: etchostsupdate
+   #   when: ansible_hostname != "{{ item }}"
+   #   with_items: "{{groups['client']}}"
+
+  
+
+---
+    - name: check the connectivity of the nodes in group 
+      ping:
+
+    - name: create deploy template
+      template:
+          src: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/template/iplist.txt
+          dest: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/ip.txt
+    #  when: "{{ ansible_hostname == 'master' }}"
+      delegate_to: master
+
+    - include_vars: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/ip.txt
+ #  - include_vars: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/server.txt
+
+    - name: Create a login user as kafka with password kafka
+      user:
+       name: kafka
+       password: $6$6tfOx6NUPMUrT/ae$AhOm/IETFOslfQJaQj.tRBX92TVd2eJms2styvXkyAaeSzci7JdEv5PhS7hySAO65KPSvdVA2rzhB8mKthqDI/
+       groups:  wheel         # Empty by default.
+       state: present
+       shell: /bin/bash       # Defaults to /bin/bash
+       system: no             # Defaults to no
+       createhome: yes        # Defaults to yes
+       home: /home/kafka      # Defaults to /home/<username>  
+
+    - name: ansible create kafka directory 
+      become: yes
+      become_user: kafka
+      file:
+       path:  ~/kafka
+       state: directory
+       owner: kafka
+       group: kafka
+       mode: '755'
+
+    # - name: upgrade all packages
+    #    yum:
+    #     name: '*'
+    #     state: latest
+
+   # - name: Install java reuired   packages
+   #   yum:
+   #     name: java-1.8.0-openjdk
+   #     state: latest
+
+    - name: Set JAVA_HOME path for kafka
+      lineinfile:
+        path:  /home/vagrant/.bash_profile
+        state: present
+        line: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.el7_7.x86_64/jre/bin/java
+ 
+    - name: Change the Directory to kafka  
+      shell: cd /home/kafka
+
+    - name: Ansible check directory exists.
+      stat:
+         path: /home/kafka/kafka/config/server.properties
+      register: files_to_delete
+
+    - debug:
+          msg: "It is a directory"
+      when: files_to_delete.stat.exists and files_to_delete.stat.isdir
+
+  #  - name: fail if already run on host
+  #    fail: msg="This host has already had this playbook run against it"
+  #    when: files_to_delete.stat.exists
+
+    - name: Fetch the file from the master to ansible
+      run_once: yes
+      fetch: src=/home/vagrant/Kafka/roles/Kafka/kafka  dest=/home/kafka  flat=yes
+      when: "{{ ansible_hostname == 'master' }}"
+
+    #- name: Copy the file from the ansible to nodes
+    #  copy: src=/home/vagrant/Kafka/roles/Kafka/kafka  dest=/home/kafka
+    #  when: "{{ ansible_hostname != 'master' }}"
+  
+    - name: localhost ip of ansible module running 
+      debug: var=hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] 
+      
+    - name: Add listner for the each node in cluster
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^#listeners=PLAINTEXT://:9092'
+        line: listeners=PLAINTEXT://node{{groups['client'].index(inventory_hostname)}}:9092
+
+    - name: Add advertised for each node in cluster
+      lineinfile:
+        path:  /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^#advertised.listeners=PLAINTEXT://your.host.name:9092'
+        line: advertised.listeners=PLAINTEXT://node{{groups['client'].index(inventory_hostname)}}:9092
+
+    - name: Configure kafka server.properties file for each node in group 
+      lineinfile:
+         path: /home/kafka/kafka/config/server.properties
+         regexp: '{{item.From}}'
+         line: '{{item.To}}'
+         state: present
+      with_items:
+          - { From: ' ', To: 'delete.topic.enable = true'}
+          - { From: 'log.dirs=/tmp/kafka-logs', To: 'log.dirs=/home/kafka/kafka/kafka-logs'}
+ 
+    - name: Assign broker id to nodes
+      lineinfile:
+         path: /home/kafka/kafka/config/server.properties
+         regexp: '^broker.id=0'
+         state: present
+         line: "broker.id={{groups['client'].index(inventory_hostname)}}"
+
+    - name: Add ip of each node  for cluster  in kafka conf file  at zookeeper.connect
+      vars:
+         comment: ':2181'
+      lineinfile:
+        dest: /home/kafka/kafka/config/server.properties
+        state: present
+        regexp: '^(zookeeper.connect=(.*)$)'
+        backrefs: yes
+        line: '\1,{{item}}{{comment}}'
+     # when:  ansible_hostname != "item"
+      loop: "{{ query('inventory_hostnames', 'client') }}"
+ 
+    #- name: Add ip of each node  for cluster  in kafka conf file  at zookeeper.connect
+    #  lineinfile:
+    #    path:  /home/kafka/kafka/config/server.properties
+    #    state: present
+    #    regexp: '^zookeeper.connect=localhost:2181'
+    #    line: zookeeper.connect=node-{{groups['client'].index(inventory_hostname)}}:2181
+    #when: "{{ ansible_hostname != 'master' }}"
+
+
+    - name: Ansible create systemctl file for zookeeper service
+      file:
+       path: "/etc/systemd/system/zookeeper.service"
+       state: touch 
+
+    - name: Add content for zookeeper service file 
+      copy:
+        dest: "/etc/systemd/system/zookeeper.service"
+        content: |
+                 [Unit]
+                 Requires=network.target remote-fs.target
+                 After=network.target remote-fs.target
+                 [Service]
+                 Type=simple
+                 User=kafka
+                 ExecStart=/home/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties
+                 ExecStop=/home/kafka/kafka/bin/zookeeper-server-stop.sh
+                 Restart=on-abnormal
+                 [Install]
+                 WantedBy=multi-user.target
+
+    - name: Create  systemctl file for kafka service
+      file:
+       path: "/etc/systemd/system/kafka.service"
+       state: touch 
+
+    - name: Add content for kafka serivce
+      copy:
+        dest: "/etc/systemd/system/kafka.service"
+        content: |
+                 [Unit]
+                 Requires=zookeeper.service
+                 After=zookeeper.service
+                 [Service]
+                 Type=simple
+                 User=kafka
+                 ExecStart=/bin/sh -c '/home/kafka/kafka/bin/kafka-server-start.sh /home/kafka/kafka/config/server.properties > /home/kafka/kafka/kafka.log 2>&1'
+                 ExecStop=/home/kafka/kafka/bin/kafka-server-stop.sh
+                 Restart=on-abnormal
+                 [Install]
+                 WantedBy=multi-user.target 
+
+
+    - name: add IP address of all hosts to /etc/hosts
+      #vars:
+      # comment: '# added by ansible'
+      lineinfile:
+        dest: /etc/hosts
+        regexp: ".* {{ item }} "
+        line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}     {{ item }}"
+        state: present
+        backup: yes
+      when: ansible_hostname != item
+      loop: "{{ query('inventory_hostnames', 'client') }}"
+ 
+   
+    - name: Configure zookeeper.properties file to change the log directory  
+      lineinfile:
+         path: //home/kafka/kafka/config/zookeeper.properties
+         regexp: '{{item.From}}'
+         line: '{{item.To}}'
+         state: present
+      with_items:
+          - { From: 'dataDir=/tmp/zookeeper', To: 'dataDir=/home/kafka/kafka/zookeeper/data'}
+
+    - name: Ansible Template for zookeeper cluser node 
+      template:
+        src: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/template/server.j2 
+        dest: /home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/server.txt
+      delegate_to: master
+
+
+    - name: Copy zookeeper cluster info to node zookeeper  conf  file
+      lineinfile:
+        path: /home/kafka/kafka/config/zookeeper.properties
+      #  regexp: "^{{ lookup('file', '/home/kafka/kafka/config/zookeeper.properties') }}"
+        line: "{{ lookup('file','/home/vagrant/Kafka/roles/Kafka/Kafka_cluster/vars/server.txt')}} "
+      #{{ lookup('file', '/home/kafka/kafka/config/zookeeper.properties') }}"
+      when: ansible_hostname != "master"
+      #loop: "{{ query('inventory_hostnames', 'all') }}"
+
+   # - name: Add ip for  clustering of  zookeeper in  conf file 
+   #   vars:
+   #     comment: ':2888:3888'
+   #   lineinfile:
+   #     dest: /home/kafka/kafka/config/zookeeper.properties
+   #     #regexp: ".*{{ item }}"
+   #     line:  "server.{{ item }}={{ item }}{{ comment }}"
+   #     state: present
+   #     backup: yes
+   #   when: ansible_hostname != item
+   #  loop: "{{ query('inventory_hostnames', 'all') }}"
+   
+    #- name: Add ip for zookeeper cluster
+    #  lineinfile:
+    #    path: /home/kafka/kafka/config/zookeeper.properties
+    #    state: present
+    #    line: "{{main_nodes_ips_with_port_zk}}"
+    #  when: "{{ ansible_hostname != 'master' }}"
+
+    - name: Add synclimit in zookeeper conf file 
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: syncLimit=2
+
+    - name: Add initlimit in zookeerper conf file
+      lineinfile:
+        path:  /home/kafka/kafka/config/zookeeper.properties
+        state: present
+        line: initLimit=5
+
+    - debug:
+        msg: Chnage synclimit and initlimit  as per the reuirement
+  
+    - name: Give permissions to an existing file
+      file:
+         path: /home/kafka/kafka/
+         owner: kafka
+         mode: '0755'
+         recurse: yes
+
+    - name: Change the Directory to kafka  
+      shell: cd /home/kafka/kafka
+
+
+    - name: Creates directory
+      file:
+        path: /home/kafka/kafka/zookeeper
+        state: directory
+        owner: kafka
+        mode: 0775
+       
+    - name: Creates directory
+      file:
+        path: /home/kafka/kafka/zookeeper/data
+        state: directory
+        owner: kafka
+        mode: 0775
+     
+
+    - stat: path=/home/kafka/kafka/zookeeper/myid
+      register: p
+
+    - name: create file myid
+      file: 
+        path=/home/kafka/kafka/zookeeper/data/myid
+        owner=kafka
+        mode=0755
+        state={{ "file" if  p.stat.exists else "touch"}}
+
+    - name: Add broker id /unique id for each server
+      lineinfile:
+        path: /home/kafka/kafka/zookeeper/data/myid 
+        state: present
+        line: "{{groups['client'].index(inventory_hostname)}}"
+
+    - name: Start service zookeeper, if not started
+      service:
+       name: zookeeper 
+       state: restarted
+
+ 
+    - name: Start service kafka, if not started
+      service:
+       name: kafka 
+       state: restarted  
+   
+    - name: Count number of node
+      debug: var=HOST_COUNT
+
+
+   # - name: Update the /etc/hosts file with node name
+   #   tags: etchostsupdate
+   #   become: yes
+   #   become_user: root
+   #   lineinfile:
+   #     path: "/etc/hosts"
+   #     regexp: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t\t{{ hostvars[item]['ansible_hostname']}}"
+   #     line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t\tserver{{groups['client'].index(inventory_hostname)}}"
+   #     state: present
+   #     backup: yes
+   #   register: etchostsupdate
+   #   when: ansible_hostname != "{{ item }}"
+   #   with_items: "{{groups['client']}}"
+
+  

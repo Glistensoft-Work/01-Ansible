@@ -1,0 +1,16 @@
+---
+type: Silenced
+api_version: core/v2
+metadata:
+  annotations: null
+  labels: null
+  name: entity:Agent-0:*
+  namespace: default
+spec:
+  begin: 1542671205
+  check: null
+  creator: admin
+  expire: 1
+  expire_on_resolve: false
+  reason: null
+  subscription: entity:Agent-0

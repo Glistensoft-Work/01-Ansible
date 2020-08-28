@@ -1,0 +1,147 @@
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-chrony
+  namespace: default
+spec:
+  command: check-chrony.rb --warn-offset 10 --crit-offset 20
+  handlers: [email,slack] 
+  interval: 10
+  publish: true
+  runtime_assets:
+  - chrony
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-cpu
+  namespace: default
+spec:
+  command: check-cpu.rb -w85 -c90
+  handlers: [email,slack] 
+  interval: 60
+  publish: true
+  runtime_assets:
+  - cpu
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-disk-usage
+  namespace: default
+spec:
+  command: check-disk-usage.rb 
+  handlers: [email,slack] 
+  interval: 60
+  publish: true
+  runtime_assets:
+  - disk-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-dir-count
+  namespace: default
+spec:
+  command: check-dir-count.rb -d /  -w 50000 -c 60000
+  handlers: [email,slack] 
+  interval: 60
+  publish: true
+  runtime_assets:
+  - file
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-http-certificate
+  namespace: default
+spec:
+  command: check-https-cert.rb -uhttps://app.mycariq.com -w 30 -c 15 
+  handlers: [email,slack] 
+  interval: 60
+  publish: true
+  runtime_assets:
+  - http
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-load
+  namespace: default
+spec:
+  command: check_load  -w 60 -c 80
+  handlers: [email,slack] 
+  interval: 60
+  publish: true
+  runtime_assets:
+  - monitoring
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-memory
+  namespace: default
+spec:
+  command: check-memory-percent.rb -w 85 -c 90
+  handlers: [email,slack] 
+  high_flap_threshold: 0
+  interval: 10
+  low_flap_threshold: 0
+  publish: true
+  runtime_assets:
+  - memory-checks
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-port
+  namespace: default
+spec:
+  command: check-ports.rb 
+  handlers: [email,slack] 
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime
+  subscriptions:
+  - system
+
+

@@ -1,0 +1,227 @@
+---
+- name: add the official Sensu repository for centos or rhel
+  become: True
+  become_method: sudo
+  template:
+    src: sensu.repo
+    dest: /etc/yum.repos.d/
+    backup: yes
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' or ansible_distribution == "Amazon"
+
+- name: Add GPG key for Sensu-server
+  apt_key:
+    url: "https://sensu.global.ssl.fastly.net/apt/pubkey.gpg"
+    state: present
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'xenial'
+
+- name: Add Sensu repository for Ubuntu 16
+  template:
+    src: sensu.ubuntu16.list
+    dest: /etc/apt/sources.list.d/sensu.list
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'xenial'
+
+- name: Add Sensu repository for Ubuntu 14
+  template:
+    src: sensu.ubuntu14.list
+    dest: /etc/apt/sources.list.d/sensu.list
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'
+
+- name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+  apt:
+    update_cache: yes
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: install sensu for centos or rhel
+  yum: name=sensu state=present
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' or ansible_distribution == "Amazon"
+
+- name: install sensu for debian or ubuntu
+  apt: name=sensu state=present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: enable sensu-client to survive reboot
+  become: True
+  become_method: sudo
+  service: name=sensu-client enabled=yes
+
+- name: Add the service scripts
+  become: True
+  become_method: sudo
+  template: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }} owner=root group=root
+  with_items:
+    - {src: "redis.json", dest: "/etc/sensu/conf.d/redis.json", mode: "0644"}
+    - {src: "transport.json", dest: "/etc/sensu/conf.d/transport.json", mode: "0644"}
+    - {src: "client.json", dest: "/etc/sensu/conf.d/client.json", mode: "0644"}
+    - {src: "uptime.py", dest: "/opt/sensu/embedded/bin/uptime.py", mode: "0777"}
+  notify: restart sensu client daemons
+  
+
+- name: Installing Sensu Plugin
+  command: sudo sensu-install -p {{ item }}
+  with_items:
+    - sensu-plugins-disk-checks
+    - sensu-plugins-memory-checks
+    - sensu-plugins-cpu-checks
+   # - sensu-plugins-network-checks
+    - sensu-plugins-chrony
+    - sensu-plugins-snmp
+    - sensu-plugins-load-checks
+    - sensu-plugins-filenr
+    - sensu-plugins-disk-checks
+    - sensu-plugins-memory-checks
+    - sensu-plugins-cpu-checks
+
+- name: Installing Sensu-network checks 
+  command: /opt/sensu/embedded/bin/gem install sensu-plugins-network-checks -v 2.0.1 
+
+- name: Check if Nginx is installed
+  shell: test -x /usr/sbin/nginx && echo "yes" || echo "no"
+  register: is_nginx_installed
+
+- name: Sensu plugin if Nginx is installed
+  when: is_nginx_installed.stdout == "yes"
+  command: sudo sensu-install -p {{ item }}
+  with_items:
+    - sensu-plugins-nginx
+
+#- name: Check if Apache is installed
+#  shell: test -x /usr/sbin/httpd && echo "yes" || echo "no"
+#  register: is_apache_installed_redhat
+#  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' or ansible_distribution == "Amazon"
+
+- name: Check if Apache is installed
+  shell: test -x /usr/sbin/apache2 && echo "yes" || echo "no"
+  register: is_apache_installed_debian
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' or ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat'
+
+- name: Sensu plugin if Apache is installed Ubuntu
+  command: sudo sensu-install -p sensu-plugins-apache
+  when: is_apache_installed_debian.stdout == "yes"
+
+
+#- name: Sensu plugin if Apache is installed Redhat
+#  command: sudo sensu-install -p sensu-plugins-apache
+#  when: is_apache_installed_redhat.stdout == "yes" 
+
+- name: Check if MySQL is installed
+  shell: test -x /usr/bin/mysql && echo "yes" || echo "no"
+  register: is_mysql_installed
+  
+
+- name: Sensu plugin if mysql is installed
+  become: True
+  become_method: sudo
+  become_user: root
+  when: is_mysql_installed.stdout == "yes"
+  command: sudo sensu-install -p {{ item }}
+  with_items:
+    - sensu-plugins-mysql
+  
+
+- name: Check if MongoDB is installed
+  shell: test -x /usr/bin/mongod || test -x /usr/bin/mongo && echo "yes" || echo "no"
+  register: is_mongodb_installed
+  
+
+- name: Sensu plugin if MongoDB is installed
+  when: is_mongodb_installed.stdout == "yes"
+  command: sudo sensu-install -p {{ item }}
+  with_items:
+    - sensu-plugins-mongodb
+
+- pip:
+    name: pymongo
+  when: is_mongodb_installed.stdout == "yes"
+
+- name: Check if Solr is installed
+  shell: test -x /etc/init.d/solr && echo "yes" || echo "no"
+  register: is_solr_installed
+
+- name: Sensu plugin if Solr is installed
+  when: is_solr_installed.stdout == "yes"
+  command: sudo sensu-install -p {{ item }}
+  with_items:
+    - sensu-plugins-solr
+
+- name: Add the sensu client config file for MySQL
+  become: True
+  become_method: sudo
+  when: is_mysql_installed.stdout == "yes"
+  lineinfile:
+    dest: /etc/sensu/conf.d/client.json
+    insertbefore: '\]\}\}'
+    line: '                    , "check-mysql-alive", "check-mysql-status", "check-mysql-threads", "check-mysql-connections", "check-mysql-disk", "check-mysql-innodb-lock", "check-mysql-query-result-count", "check-mysql-replication-status", "met-mysql-graphite", "met-mysql-processes", "met-mysql-raw", "met-mysql"'
+  notify: restart sensu client daemons
+  
+
+- name: Add the sensu client config file for MongoDB
+  become: True
+  become_method: sudo
+  when: is_mongodb_installed.stdout == "yes"
+  lineinfile:
+    dest: /etc/sensu/conf.d/client.json
+    insertbefore: '\]\}\}'
+    line: '                    , "check-mongodb-metric", "check-mongodb", "met-mongodb", "met-mongodb-replication"'
+  notify: restart sensu client daemons
+  
+
+- name: Add the sensu client config file for Nginx
+  become: True
+  become_method: sudo
+  when: is_nginx_installed.stdout == "yes"
+  lineinfile:
+    dest: /etc/sensu/conf.d/client.json
+    insertbefore: '\]\}\}'
+    line: '                    , "check-nginx-status", "metric-nginx"'
+  notify: restart sensu client daemons
+
+
+- name: Add the sensu client config file for Solr
+  when: is_solr_installed.stdout == "yes"
+  become: True
+  become_method: sudo
+  lineinfile:
+    dest: /etc/sensu/conf.d/client.json
+    insertbefore: '\]\}\}'
+    line: '                    , "met-solr-v1.4graphite", "met-solr-graphite", "met-solr4-graphite"'
+  notify: restart sensu client daemons
+
+- name: Add the sensu client config file for MySQL
+  become: True
+  become_method: sudo
+  when: is_mysql_installed.stdout == "yes"
+  lineinfile:
+    dest: /etc/sensu/conf.d/client.json
+    insertafter: 'address'
+    line: '
+  "mysql": {
+               "host": "{{ mysql_host }}",
+               "port": 3306,
+               "user": "{{ mysql_username }}",
+               "password": "{{ mysql_passwd }}", 
+	       "database": "{{ mysql_database }}",
+               "socket": "{{ mysql_socket }}"
+           },  '
+  notify: restart sensu client daemons
+  
+
+- name: Add the sensu client config file for Mongodb
+  become: True
+  become_method: sudo
+  when: is_mongodb_installed.stdout == "yes"
+  lineinfile:
+    dest: /etc/sensu/conf.d/client.json
+    insertafter: 'address'
+    line: '
+  "mongo": {
+               "host": "{{ mongo_host }}",
+               "port": 27017,
+               "user": "{{ mongo_username }}",
+               "password": "{{ mongo_passwd }}",
+	       "database": "{{ mongo_database }}"
+           },  '
+  notify: restart sensu client daemons
+  
+
+- name: Reatart sensu-client service
+  service: name=sensu-client state=restarted

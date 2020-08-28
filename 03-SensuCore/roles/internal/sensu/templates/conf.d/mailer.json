@@ -1,0 +1,15 @@
+{
+        "mailer": {
+                "admin_gui": "http://13.71.115.28:3000/",
+                "smtp_authentication":"plain",
+                "smtp_username":"mycariq",
+                "smtp_password":"",
+                "smtp_port":"587",
+                "fromname":"CarIQ Operations",
+                "content_type": "html",
+                "smtp_address":"smtp.sendgrid.net",
+                "smtp_domain": "mycariq.com",
+                "mail_from":"ops@mycariq.com",
+                "mail_to": "cloud-infra@mycariq.com"
+      }
+}

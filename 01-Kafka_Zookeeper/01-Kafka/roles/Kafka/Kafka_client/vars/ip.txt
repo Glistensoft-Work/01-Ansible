@@ -1,0 +1,5 @@
+items: 0
+server_number: 0
+main_nodes_ips_with_port_zk: "172.18.200.194:2888:3888,172.18.200.103:2888:3888"
+main_nodes_ips_with_portkf: "172.18.200.194:2181,172.18.200.103:2181"
+HOST_COUNT: "2"

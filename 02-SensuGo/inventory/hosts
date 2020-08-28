@@ -1,0 +1,11 @@
+backend0 ansible_host=192.168.0.109   ansible_connection=ssh ansible_ssh_user=root  ansible_ssh_pass=vagrant 
+
+agent0 ansible_host=192.168.0.109   ansible_connection=ssh ansible_ssh_user=root  ansible_ssh_pass=vagrant 
+
+
+[backends]
+backend0
+
+[agents]
+agent0
+

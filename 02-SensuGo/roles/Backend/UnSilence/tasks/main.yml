@@ -1,0 +1,59 @@
+---
+ - name : Display All the Entity 
+   command : sensuctl entity list 
+   register: List
+
+ - debug: var=List.stdout_lines
+
+ - name: Enter client name from above name
+   pause:
+     prompt: "Enter the client name:"
+     echo: yes
+   register: prompt_input
+
+ - debug: var=prompt_input.user_input
+
+ - name: Ansible delete file 
+   file:
+      path: /home/users/mmaurya/Sensu-Go/roles/Backend/UnSilence/vars/tmp
+      state: absent
+   delegate_to: localhost
+
+ - name: Ansible create file if it doesn't exist example
+   file:
+      path: "/home/users/mmaurya/Sensu-Go/roles/Backend/UnSilence/vars/tmp"
+      state: touch
+   delegate_to: localhost
+
+ - local_action: lineinfile line={{prompt_input.user_input}} path=/home/users/mmaurya/Sensu-Go/roles/Backend/UnSilence/vars/tmp
+   delegate_to: localhost
+
+ - name: Copy Remote-To-Remote (from serverA to serverB)
+   copy:
+      src : /home/users/mmaurya/Sensu-Go/roles/Backend/UnSilence/template/UnSilences-checks.yml
+      dest: /tmp/devops_directory
+   delegate_to: backend0
+
+ - name: Copy Remote-To-Remote (from serverA to serverB) user input 
+   copy:
+      src : /home/users/mmaurya/Sensu-Go/roles/Backend/UnSilence/vars/tmp
+      dest: /tmp/devops_directory
+   delegate_to: backend0
+
+ - name: Replace for the Agent
+   lineinfile:
+     path: /tmp/devops_directory/UnSilences-checks.yml 
+     regexp: '^  subscription: entity:Agent-0'
+     #line: '  subscription: entity:'
+     line: "  subscription: entity:{{ lookup('file','/home/users/mmaurya/Sensu-Go/roles/Backend/UnSilence/vars/tmp')}}"
+
+ - name : Silence all the checks for Agent
+   command : sensuctl create --file  /tmp/devops_directory/UnSilences-checks.yml
+
+ - name: Ansible delete file 
+   file:
+      path: /tmp/devops_directory/tmp
+      state: absent
+   delegate_to: backend0
+
+

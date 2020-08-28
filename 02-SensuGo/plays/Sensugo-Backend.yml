@@ -1,0 +1,24 @@
+---
+- name: Install & configure Sensu-Go
+  gather_facts: True
+  become: True
+  become_method: sudo
+  become_user: root
+  hosts: backends
+  vars:
+   os_environment:
+     - key: SENSU_BACKEND_CLUSTER_ADMIN_USERNAME
+       value : admin
+     - key: SENSU_BACKEND_CLUSTER_ADMIN_PASSWORD
+       value : admin
+   proxy_env:
+       SENSU_BACKEND_CLUSTER_ADMIN_USERNAME:  SENSU_BACKEND_CLUSTER_ADMIN_USERNAME=admin
+  roles:
+   - { role: Backend,                tags: ['Backend'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   - { role: sensuctl,               tags: ['sensuctl'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   - { role: plugins,                tags: ['plugins'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   - { role: influxdb,               tags: ['influxdb'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   - { role: grafana,                tags: ['grafana'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   - { role: handlers,               tags: ['handlers'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   - { role: checks,                 tags: ['checks'], when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' }
+   

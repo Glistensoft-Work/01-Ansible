@@ -1,0 +1,81 @@
+---
+# tasks file for influxdb
+
+ - name: Download grafana
+   get_url:
+     url: https://dl.grafana.com/oss/release/grafana-6.7.1-1.x86_64.rpm  
+     dest: /tmp
+     timeout: 300
+
+ - name: Install Grafana
+   yum:
+    name: /tmp/grafana-6.7.1-1.x86_64.rpm
+    state: present
+
+ - name: Install influxdb
+   yum: name={{item}} state=present 
+   with_items:
+#      #- - https://dl.influxdata.com/influxdb/releases/influxdb-1.2.0.x86_64.rpm
+       - https://dl.influxdata.com/influxdb/releases/influxdb-1.7.10.x86_64.rpm
+       - grafana
+       - python-pip
+
+ - name: Install influxdb python module
+   pip:
+      name: influxdb
+
+ - name: Configuration
+   template: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }} owner=root group=root
+   with_items:
+    - {src: "handlers.json.j2", dest: "/etc/sensu/conf.d/handlers.json", mode: "0644"}
+    - {src: "influxdb.conf.j2", dest: "/etc/influxdb/influxdb.conf", mode: "0644"}
+    - {src: "grafana.ini.j2", dest: "/etc/grafana/grafana.ini", mode: "0644"}
+    - {src: "influxdb_line_protocol.rb", dest: "/etc/sensu/extensions/influxdb_line_protocol.rb", mode: "0644"}
+    - {src: "body.json", dest: "/tmp/body.json", mode: "0644"}
+
+
+ 
+ - name: Requred gem installation
+   command: /opt/sensu/embedded/bin/gem install "{{item}}"
+   with_items:
+     - influxdb
+
+ - name: Start Influxdb service
+   service: name={{item}} enabled=yes state=restarted
+   with_items:
+      - influxdb
+
+# - name: Create database
+#   influxdb_database:
+#      hostname: "127.0.0.1"
+#      database_name: "sensu"
+#      state: present
+
+
+ #- name: Create database 
+ #  command: curl "http://localhost:8086/query" --data-urlencode "q=create database sensu"
+ #  delegate_to: 10.7.0.5
+
+
+# - name: Create database 
+#   command: influx  -execute 'create  database  sensu '
+
+# - name: Create database using custom credentials
+#   influxdb_database:
+#      hostname: "{influxdb_ip_address}}"
+#      username: "{{influxdb_username}}"
+#      password: "{{influxdb_password}}"
+#      database_name: "{{influxdb_database_name}}"
+#      state: present
+
+ - name: Start Influxdb, Grafana, Sensu-server
+   service: name={{item}} enabled=yes state=restarted
+   with_items:
+      - influxdb
+      - grafana-server
+
+ - name: datasource add
+   shell: curl -u admin:admin -H "Content-Type:application/json" -d @/tmp/body.json  http://{{ sensu_server_ip }}:3001/api/datasources
+   tags:
+   - data
+

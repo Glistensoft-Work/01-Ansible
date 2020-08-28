@@ -1,0 +1,28 @@
+---
+ - name: enable option in in syslog 
+   lineinfile:
+    path: /etc/systemd/journald.conf
+    state: present
+    regexp: '^#ForwardToSyslog=yes'
+    line: 'ForwardToSyslog=yes'
+ 
+
+ - name: Insert /etc/rsyslog.d/99-sensu-backend.conf
+   blockinfile:
+      path: /etc/rsyslog.d/99-sensu-backend.conf
+      create: yes
+      block: |
+               if $programname == 'sensu-backend' then {
+                   /var/log/sensu/sensu-backend.log
+                         ~
+                }
+    
+ - name: Start service systemd-journald, if not started
+   service:
+    name: systemd-journald
+    state: restarted
+
+ - name: restart rsyslog
+   service:
+    name: rsyslog
+    state: restarted

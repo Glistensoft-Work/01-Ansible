@@ -1,0 +1,82 @@
+---
+# tasks file for Uchiwa
+- name: Add GPG key for Uchiwa
+  apt_key:
+    url: "https://sensu.global.ssl.fastly.net/apt/pubkey.gpg"
+    state: present
+
+- name: Add Sensu repository for Ubuntu 16
+  template:
+    src: sensu.ubuntu14.list
+    dest: /etc/apt/sources.list.d/sensu.list
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'xenial'
+
+- name: Add Sensu repository for Ubuntu 16
+  template:
+    src: sensu.ubuntu16.list
+    dest: /etc/apt/sources.list.d/sensu.list
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'
+
+- name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+  apt:
+    update_cache: yes
+#    cache_valid_time: 3600
+
+- name: Install Uchiwa server
+  apt:
+    name: uchiwa
+    state: present
+
+- name: Start Uchiwa
+  service: 
+    name: uchiwa
+    state: started
+    enabled: yes
+
+- name: Install Nginx 
+  apt:
+    name: nginx
+    state: present
+
+- name: Configure Nginx to forward request to Uchiwa
+  template:
+    src: "ubuntu.nginx.conf"
+    dest: "/etc/nginx/nginx.conf"
+
+- name: Configure Nginx to forward request to Uchiwa - put file in sites-available
+  copy:
+    src: "{{ playbook_dir }}/../roles/internal/uchiwa/files/uchiwa.conf" 
+    dest: "/etc/nginx/sites-available/"
+
+- name: Remove default nginx host file
+  file:
+    path: "/etc/nginx/sites-enabled/default"
+    state: absent
+
+
+- name: Symlink uchiwa.conf to sites-enabled
+  file: 
+    src: "/etc/nginx/sites-available/uchiwa.conf"
+    dest: "/etc/nginx/sites-enabled/uchiwa.conf"
+    state: link
+
+- name: Just add Sensu host server to Uchiwa dashboard. You need to change this later
+  template:
+    src: "uchiwa.json"
+    dest: "/etc/sensu/uchiwa.json"
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+# tasks file for sake-of-restart
+- name: Wait for 10 seconds to restart Uchiwa
+  command: sleep 10s
+
+- name: Restart Uchiwa
+  service:
+    name: uchiwa
+    state: restarted
+    enabled: yes

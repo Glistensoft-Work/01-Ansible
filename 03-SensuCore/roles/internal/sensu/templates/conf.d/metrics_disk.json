@@ -1,0 +1,16 @@
+
+{
+  "checks": {
+    "met_disk": {
+	"type": "metric",
+       "command": "metrics-disk.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-disk"
+        ],
+       "interval": 120,
+       "occurances": 20
+   }
+}
+}
+

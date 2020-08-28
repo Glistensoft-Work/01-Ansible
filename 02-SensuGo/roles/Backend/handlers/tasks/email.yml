@@ -1,0 +1,17 @@
+---
+api_version: core/v2
+type: Handler
+metadata:
+  namespace: default
+  name: email
+spec:
+  type: pipe
+  command: sensu-email-handler -f sshukla@mycariq.com  -t manish@glistensoft.com  -s 10.4.1.11 -P 25   -u sshukla@mycariq.com -p Glisten2017!  -T /etc/sensu/email_template
+  filters:
+  - is_incident
+  - not_silenced
+  - state_change_only
+  runtime_assets:
+  - email-handler
+
+

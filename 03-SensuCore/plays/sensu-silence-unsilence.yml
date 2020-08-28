@@ -1,0 +1,10 @@
+- name: Install & configure Sensu with Grafana dashboard on CentOS 7 / Ubuntu server
+  gather_facts: True
+  become: True
+  become_method: sudo
+  become_user: root
+  hosts: servers
+
+  roles:
+  - { role: Silence,                    tags: ['Silence']}
+  - { role: UnSilence,                   tags: ['UnSilence']}

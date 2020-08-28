@@ -1,0 +1,26 @@
+---
+ - lineinfile:
+     path: /home/kafka/kafka/config/zookeeper.properties
+     line: "broker-id= {{groups['client'].index(inventory_hostname)}}"
+
+# - name: Set Broker ID
+#   set_fact:
+#     broker_id: {{ groups['client'].index(inventory_hostname) }}
+ 
+ #- set_fact: 
+ #    start: server_number={{ server_number }} 
+ #    stop:  server_number= 2
+ # when: server_number !=2
+  # when: server_number == "{{in_hostname}}"
+  # - set_fact: server_number={{ server_number | int + 1 }} 
+  #- name: set uniqueis 
+  #  set_fact: zk_id= {{items.0 + 1} 
+  #  with_indexed_items= "{{groups['client']}}"
+  #  when:  items.1 == "{{inventory_hostname}}"
+ 
+# - name: Set Zookeeper
+#   copy: >
+#       content= {{ item.0 + 1 }}
+#       dest= /home/kafka/kafka/config/zookeeper.properties
+#   with_indexed_items: "{{groups['client']}}"
+#   when: item.1 == {{inventory_hostname}}

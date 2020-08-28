@@ -1,0 +1,11 @@
+---
+- name: Kafka Setup 
+  hosts: client
+  gather_facts: True
+  become: yes
+  become_method: sudo
+  become_user: root
+
+  roles:
+   #- { role: Kafka_client,  tags: ['Kafka_client'] } 
+   - { role: Kafka_cluster,  tags: ['Kafka_cluster'] } 

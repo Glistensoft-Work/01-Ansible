@@ -1,0 +1,16 @@
+{
+  "checks": {
+    "chk_memory": {
+        "type": "metric",
+       "command": "check-memory-percent.rb -w 80 -c 90",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "chk-memory"
+        ],
+       "interval": 60,
+       "occurances": 20
+   }
+}
+}
+
+

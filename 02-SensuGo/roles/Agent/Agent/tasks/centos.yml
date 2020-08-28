@@ -1,0 +1,7 @@
+---
+  - name: check the connectivity of the nodes in group
+    ping:
+
+  - name: check if sensu-core client is absent 
+    when: is_sensu-client_installed.stdout == "yes"
+

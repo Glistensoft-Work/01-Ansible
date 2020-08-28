@@ -1,0 +1,49 @@
+---
+
+ - name : Add Grafana repo to system
+   template: 
+    src:  grafana.repo
+    dest: /etc/yum.repos.d/
+    owner: root
+    mode: '0644'
+
+ - name: Install grafana
+   yum:
+     name: grafana
+     state: present
+
+
+ - name: Make sure a service is running
+   systemd:
+     state: started
+     name: grafana-server.service
+   #delegate_to : backend0
+
+ - name: Add IP for grafana server
+   lineinfile:
+      path:  /etc/grafana/grafana.ini
+      state: present
+      regexp: '^;http_addr ='
+      line: http_addr ={{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}
+
+
+ - name: Add port for grafana
+   lineinfile:
+      path:  /etc/grafana/grafana.ini
+      state: present
+      regexp: '^;http_port = 3000'
+      line: http_port = 3001
+
+ - name: also issue daemon-reload to pick up config changes
+   systemd:
+    state: restarted
+    daemon_reload: yes
+    name : grafana-server.service
+
+ - name: restart service after changes in grafana.ini 
+   systemd:
+     state: restarted
+     name: grafana-server.service
+
+
+

@@ -1,0 +1,18 @@
+
+{
+  "checks": {
+    "met_cpu": {
+	"type": "metric",
+       "command": "metrics-cpu.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-cpu"
+        ],
+       "interval": 120,
+       "occurances": 20
+   }
+}
+}
+
+
+

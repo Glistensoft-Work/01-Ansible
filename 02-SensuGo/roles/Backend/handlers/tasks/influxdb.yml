@@ -1,0 +1,19 @@
+---
+api_version: core/v2
+type: Handler
+metadata:
+  namespace: default
+  name: influx-db
+spec:
+  type: pipe
+  command: sensu-influxdb-handler -d sensu
+  timeout: 10
+  env_vars:
+  - INFLUXDB_ADDR=http://localhost:8086
+  - INFLUXDB_USER=sensu
+  - INFLUXDB_PASS=sensu
+  filters:
+  - has_metrics
+  runtime_assets:
+  - influxdb-handler
+

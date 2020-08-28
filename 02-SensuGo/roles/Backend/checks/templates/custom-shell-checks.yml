@@ -1,0 +1,164 @@
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-kafka-consumer-process
+  namespace: default
+spec:
+  command: check-process.rb -p /opt/babelfish/kafkaConsumers/receiverMongoInserter.js -w85 -c90
+  interval: 60
+  publish: true
+  runtime_assets:
+  - process
+  - sensu-ruby-runtime
+  subscriptions:
+  - zk-consumer-process
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-kafka-cluster
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-kafka-cluster.sh
+  interval: 60
+  publish: true
+  subscriptions:
+  - zk
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-kafka-leader-port
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-kafka-leader-port.sh
+  interval: 60
+  publish: true
+  subscriptions:
+  - zk
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-kafka-port
+  namespace: default
+spec:
+  command: check-ports.rb -H 10.7.0.5  -p 9092,2181,3888
+  interval: 60
+  publish: true
+  runtime_assets:
+  - network-check
+  - sensu-ruby-runtime 
+  subscriptions:
+  - zk
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-kafka-MongoInserter-lag.sh
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-kafka-MongoInserter-lag.sh
+  interval: 60
+  publish: true
+  subscriptions:
+  - zk
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mysql-replication
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-mysql-replication.sh
+  interval: 60
+  publish: true
+  subscriptions:
+  - mysql
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mysql-slave
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-mysql-slave.sh
+  interval: 60
+  publish: true
+  subscriptions:
+  - mysql
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-crawler
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/crawler
+  interval: 60
+  publish: true
+  subscriptions:
+  - crawler
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-mongodb-replication
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-mongodb-replication-status.sh 10.7.0.5
+  interval: 60
+  publish: true
+  subscriptions:
+  - mongo
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-ttl-working
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-ttl-working.sh  10.7.0.5
+  interval: 60
+  publish: true
+  subscriptions:
+  - ttl
+
+
+
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-verification
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-verification.sh 10.7.0.5
+  interval: 60
+  publish: true
+  subscriptions:
+  - verification
+
+
+

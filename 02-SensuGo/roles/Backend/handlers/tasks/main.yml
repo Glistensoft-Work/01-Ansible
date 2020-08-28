@@ -1,0 +1,26 @@
+---
+
+ - name: ansible create directory example
+   file:
+      path: /tmp/devops_directory
+      state: directory
+   delegate_to: backend0
+
+ - name: Copy Remote-To-Remote (from serverA to serverB)
+   copy:
+      src : /home/users/mmaurya/Sensu-Go/roles/Backend/handlers/tasks/
+      dest: /tmp/devops_directory
+   delegate_to: backend0
+
+ - name: Sensu-go email handlers
+   command: sensuctl create --file  /tmp/devops_directory/email.yml
+
+ - name: Sensu-go slack handlers
+   command: sensuctl create --file  /tmp/devops_directory/slack.yml
+
+ - name: Sensu-go event filters
+   command: sensuctl create --file  /tmp/devops_directory/event.yml
+
+ - name: Sensu-go influxdb handlers
+   command: sensuctl create --file  /tmp/devops_directory/influxdb.yml
+

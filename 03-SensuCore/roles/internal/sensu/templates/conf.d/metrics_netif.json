@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "check_met_netif": {
+	"type": "metric",
+       "command": "metrics-netif.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "check-met-netif"
+        ],
+       "interval": 200,
+       "occurances": 20
+   }
+}
+}
+

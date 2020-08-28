@@ -1,0 +1,41 @@
+---
+- name: Update APT package cache
+  action: apt update_cache=yes
+  become: true
+  tags:
+  - aptupdate
+
+- name: Install python
+  apt: 
+       name: python 
+       state: present
+  tags:
+  - python.deb
+
+- name: Install latest version of "openjdk-8-jdk" ignoring "install-recommends"
+  apt:
+    name: openjdk-8-jdk
+    state: latest
+    install_recommends: yes
+  tags:
+  - java8.deb
+
+- name: install basic tools for deb 
+  apt: package={{item}} state=installed
+  with_items:
+    - unzip
+    - net-tools
+    - vim
+    - wget
+    - sysstat
+    - telnet
+    - htop
+    - python-pip
+    - snmp 
+    - snmpd 
+    - snmp-mibs-downloader
+    - ntp 
+    - sysstat
+    - build-essential
+  tags:
+  - basic.deb

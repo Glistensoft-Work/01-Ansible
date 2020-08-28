@@ -1,0 +1,79 @@
+---  
+
+ - name: install jq package
+   yum:
+     name: jq
+     state: present
+
+ - name: List of The client register in sensu go 
+   shell: curl -s http://127.0.0.1:4567/clients | jq . | grep -w name | cut -d ":" -f2 |   tr -d '"' | tr -d ","
+   register: sensu
+
+ - debug: var=sensu.stdout_lines
+   register: option
+
+ - name: Enter client name from above name 
+   pause:
+     prompt: "Enter the client name:"
+     echo: yes
+   register: prompt_input 
+
+ - debug: var=prompt_input.user_input
+
+ - name: Ansible create file if it doesn't exist example
+   file:
+      path: "/home/users/mmaurya/sensu-for-cariq/roles/internal/Silence/vars/tmp"
+      state: touch
+   delegate_to: localhost
+
+ - local_action: lineinfile line={{ prompt_input.user_input }} path=/home/users/mmaurya/sensu-for-cariq/roles/internal/Silence/vars/tmp
+
+ - name: Store file into /tmp
+   copy:
+    src: /home/users/mmaurya/sensu-for-cariq/roles/internal/Silence/vars/tmp
+    dest: /tmp
+
+ - name: Store file into /tmp
+   copy:
+    src: /home/users/mmaurya/sensu-for-cariq/roles/internal/Silence/tasks/silence.sh
+    dest: /tmp
+
+
+ - name: Silence all the check on the client  
+   shell: sh  /tmp/silence.sh
+ 
+ - name: Start service httpd, if not started
+   service:
+    name: uchiwa
+    state: restarted
+
+  
+ - name: Ansible delete file example
+   file:
+     path: /home/users/mmaurya/sensu-for-cariq/roles/internal/Silence/vars/tmp
+     state: absent
+ 
+# - name: Silence all the check on the client  
+#   shell: curl -s -i -X POST -H  'Content-Type:application/json' -d '{"subscription":"client:cin-cariq-dev-admin"}' http://127.0.0.1:4567/silenced 
+#   when: prompt_input.user_input ==  "cin-cariq-dev-admin"
+
+# - name: post to sensu for silence
+#   uri:
+#     url: http://127.0.0.1:4567/silenced
+#     method: POST
+#     headers:
+#        Content-Type: application/json 
+#     body:
+#       subscription:
+#            client: prompt_input.user_input 
+
+
+# - name: Silence all the check on the client  
+#   shell: curl -s -i -X POST -H  'Content-Type:application/json' -d '{"subscription":"client:echo prompt_input.user_input"}' http://127.0.0.1:4567/silenced/clear 
+
+
+ 
+# - name: Silence all the check on the client  
+#   shell: curl -s -i -X POST -H  'Content-Type:application/json' -d '{"subscription":"client:echo prompt_input.user_input"}' http://127.0.0.1:4567/silenced/clear 
+
+  

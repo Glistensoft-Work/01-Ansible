@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "check_nodejs_running": {
+       "host": "soft-admin",
+       "command": "check-ports.rb  -p49999",
+       "handlers": ["default","mailer"],
+       "subscribers": [
+            "check-nodejs-running"
+        ],
+       "interval": 60,
+       "occurances": 20
+   }
+}
+}
+

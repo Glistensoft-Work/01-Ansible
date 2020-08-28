@@ -1,0 +1,42 @@
+---
+
+ - name: install the epel-release
+   yum:
+     name: epel-release
+     state: latest
+
+ - name: install the  python34-pip
+   yum:
+     name:  python34-pip
+     state: latest
+
+ - name : install  python34-pip
+   command :  pip3 install pymongo
+
+ - name: ansible create directory example
+   file:
+      path: /tmp/devops_directory
+      state: directory
+   delegate_to: backend0
+
+ - name: Copy Remote-To-Remote (from serverA to serverB)
+   copy:
+      src : /home/users/mmaurya/Sensu-Go/roles/Backend/checks/tasks/
+      dest: /tmp/devops_directory
+   delegate_to: backend0
+
+ - name: creating standard checks 
+   command : sensuctl create --file  /tmp/devops_directory/standard-checks.yml
+  
+ - name: creating standard metrics
+   command : sensuctl create --file  /tmp/devops_directory/standard-metric.yml
+
+ - name: creating specific checks 
+   command : sensuctl create --file  /tmp/devops_directory/specific-checks.yml
+
+ - name: creating custom shell checks
+   command : sensuctl create --file  /tmp/devops_directory/custom-shell-checks.yml
+
+# - name: creating separate check 
+#   command : sensuctl create --file  /tmp/devops_directory/seprate-checks.yml
+

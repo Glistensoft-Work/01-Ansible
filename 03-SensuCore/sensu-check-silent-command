@@ -1,0 +1,2 @@
+ curl -s -i -X POST -H 'Content-Type: application/json' -d '{"subscription": "client:cin-cariq-dev-admin"}' http://127.0.0.1:4567/silenced
+

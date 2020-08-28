@@ -1,0 +1,17 @@
+  - system
+  - nginx
+  - mysql
+  - fos
+  - mongo
+  - social
+  - socket
+  - tomcat
+  - nodejs
+  - socket
+  - zk
+  - zk-consumer-process
+  - crawler
+  - verification
+  - ttl
+  - fd
+

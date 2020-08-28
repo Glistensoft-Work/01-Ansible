@@ -1,0 +1,17 @@
+---
+# vars file for sensu
+#sensu_server_ip: {{"ansible_eth0.ipv4.address"}}
+#rabbitmq_username: 
+#rabbitmq_pass: 
+#rabbitmq_vhost:
+uchiwa_username: uchiwa-admin
+uchiwa_password: uchiwa@123
+smtp_username: username
+smtp_password: pass
+smtp_port: 587
+mail_from_name: devops@localhost.localhost
+smtp_addr: localhost
+smtp_domain: mail.localhost.localhost
+mail_from: devops@localhost.localhost
+mail_to: user@otherdomain.com
+

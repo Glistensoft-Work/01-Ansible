@@ -1,0 +1,2 @@
+    server.0=node0:2888:3888
+    server.1=node1:2888:3888

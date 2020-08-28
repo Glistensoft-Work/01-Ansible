@@ -1,0 +1,13 @@
+    {
+      "client": {
+        "name": "windows",
+        "address": "172.31.21.185",
+        "environment": "development",
+        "subscriptions": [
+          "dev",
+          "windows"
+        ]
+    }
+}
+
+

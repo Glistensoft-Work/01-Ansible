@@ -1,0 +1,17 @@
+{
+ "checks": {
+   "met-mysql": {
+        "type": "metric",
+        "command": "metrics-mysql-graphite.rb -h :::address::: -p ':::mysql.password:::' -u:::mysql.username:::",
+        "handlers": ["default","influxdb"],
+        "subscribers": [
+           "met-mysql"
+           ],
+        "interval": 30,
+        "occurances": 20
+         }
+    }
+}
+
+
+

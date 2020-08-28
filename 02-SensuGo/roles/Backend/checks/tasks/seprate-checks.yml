@@ -1,0 +1,54 @@
+---
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: check-out-of-memory
+  namespace: default
+spec:
+  command: sh /var/cache/sensu/custom-checks/check-out-of-memory.sh 
+  handlers: [email,slack]
+  interval: 10
+  publish: true
+  runtime_assets:
+  - network-check
+  subscriptions:
+  - outofmemory
+
+#---
+#type: CheckConfig
+#metadata:
+#  name: met-process-status
+#  namespace: default
+#spec:
+#  command: metrics-process-status.rb -p activemq
+#  handlers: [influx-db]
+#  interval: 60
+#  publish: true
+#  output_metric_format: graphite_plaintext
+#  output_metric_handlers:
+#   - influx-db
+#  runtime_assets:
+#  - process
+#  - sensu-ruby-runtime
+#  subscriptions:
+#  - activemq
+
+
+
+#---
+#type: CheckConfig
+#api_version: core/v2
+##metadata:
+#  name: check-web-ports
+#  namespace: default
+#spec:
+#  command: check-ports.rb  -p 9200
+#  interval: 10
+#  publish: true
+#  runtime_assets:
+#  - network-check
+#  - sensu-ruby-runtime
+#  subscriptions:
+#  - web
+
+

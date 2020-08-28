@@ -1,0 +1,45 @@
+---
+
+ - name : Add influxdb repo to system
+   template: 
+    src:  influxdb.repo
+    dest: /etc/yum.repos.d/
+    owner: root
+    mode: '0644'
+
+ - name: Install influxdb
+   yum:  name={{item}} state=present
+   with_items:
+      - influxdb
+      - python-pip
+
+ - name: Install influxdb python module
+   pip:
+      name: influxdb
+
+ - name: Start Influxdb service
+   service: name={{item}} enabled=yes state=restarted
+   with_items:
+      - influxdb
+
+
+
+ - name: sleep for 60 seconds and continue with play
+   wait_for:
+    timeout: 60
+
+ - name: create database sensu
+   command: influx  -execute 'create  database  sensu '
+# command: curl -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE DATABASE sensu"
+   delegate_to: backend0 
+ 
+ - name: Start Influxdb
+   service: name={{item}} enabled=yes state=restarted
+   with_items:
+      - influxdb
+
+# - name: datasource add
+#   shell: curl -u admin:admin -H "Content-Type:application/json" -d @/tmp/body.json  http://{{ sensu_server_ip }}:3001/api/datasources
+   tags:
+   - data
+

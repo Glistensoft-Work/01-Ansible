@@ -1,0 +1,5 @@
+main_nodes_ips_with_port_zk: "192.168.0.119 :2181192.168.0.1182181"
+main_nodes_ips: "192.168.0.119      192.168.0.118         "
+main_nodes_ips_with_portkf: "192.168.0.119  :2888:3888,192.168.0.1182888:3888"
+HOST_COUNT: "2"
+

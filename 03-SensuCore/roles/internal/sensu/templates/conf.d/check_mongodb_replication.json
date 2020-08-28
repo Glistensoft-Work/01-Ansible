@@ -1,0 +1,15 @@
+{
+ "checks": {
+   "check_mongodb_replication_status": {
+        "host": "cindev-ct-mongodb",
+        "command": "check-mongodb-replication-status.sh 10.6.0.9",
+        "handlers": ["default","mailer"],
+        "subscribers": [
+           "check-mongodb-replication-status"
+           ],
+        "interval": 30,
+        "occurances": 1
+         }
+    }
+}
+

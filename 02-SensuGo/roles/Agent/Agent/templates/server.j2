@@ -1,0 +1,4 @@
+{% for host in groups[ 'backends'] %}
+   - ws://{{ hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}:8081
+{% endfor %}
+
