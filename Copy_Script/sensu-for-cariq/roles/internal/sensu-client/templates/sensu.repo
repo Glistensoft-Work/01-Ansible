@@ -1,6 +1,0 @@
-[sensu]
-name=sensu
-baseurl=https://eol-repositories.sensuapp.org/yum/$releasever/$basearch/
-gpgkey=https://eol-repositories.sensuapp.org/yum/pubkey.gpg
-gpgcheck=1
-enabled=1

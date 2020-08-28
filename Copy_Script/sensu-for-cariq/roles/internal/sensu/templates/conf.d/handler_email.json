@@ -1,9 +1,0 @@
-{
-    "handlers": {
-        "mailer": {
-          "type": "pipe",
-          "command":  "handler-mailer.rb -j mailer -t /etc/sensu/conf.d/mailer.html.erb"
-        }
-    }
-}
-

@@ -1,6 +1,0 @@
----
-influxdb_ip_address: 127.0.0.1
-influxdb_username: root
-influxdb_password: root
-influxdb_database_name: sensu
-
