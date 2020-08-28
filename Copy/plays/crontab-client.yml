@@ -1,0 +1,12 @@
+---
+- name: Copy  & confirgure  crontab on remote machine 
+  hosts: copy-client
+  gather_facts: True
+  become: True
+  become_method: sudo
+  become_user: root
+  vars_files:
+  - ../group_vars/crontab/crontab.yml
+
+  roles:
+   - { role: tools,  tag: ['tools'] } 

@@ -1,0 +1,18 @@
+
+{
+  "checks": {
+    "met_load": {
+	"type": "metric",
+       "command": "metrics-load.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-load"
+        ],
+       "interval": 150,
+       "occurances": 20
+   }
+}
+}
+
+
+

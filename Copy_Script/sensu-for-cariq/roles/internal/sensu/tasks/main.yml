@@ -1,0 +1,62 @@
+- include: redhat.yml
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'RedHat' or ansible_distribution == "Amazon"
+
+- include: ubuntu.yml
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- pip:
+    name: pymongo
+
+- file:
+    path: /etc/sensu/conf.d
+    state: directory
+    mode: 0755
+
+- name: Copy configuration files in conf.d 
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: "api.json", dest: "/etc/sensu/conf.d/api.json" }
+    - { src: "transport.json", dest: "/etc/sensu/conf.d/transport.json" }
+    - { src: "redis.json", dest: "/etc/sensu/conf.d/redis.json" }
+    - { src: "uchiwa.json", dest: "/etc/sensu/uchiwa.json" }
+    - { src: "conf.d/mailer.json", dest: "/etc/sensu/conf.d/mailer.json" }
+    - { src: "conf.d/mailer.html.erb", dest: "/etc/sensu/conf.d/mailer.html.erb" }
+
+
+- name: Copy plugins to Sensu
+  copy: src={{ item.src }} dest={{ item.dest }}
+  become: True
+  become_user: root
+  with_items:
+    - { src: "{{ playbook_dir }}/../roles/internal/sensu/templates/conf.d/", dest: "/etc/sensu/conf.d/" }
+
+- name: Installing Sensu Plugin
+  command: sudo sensu-install -p {{ item }}
+  with_items:
+    - sensu-plugins-disk-checks
+    - sensu-plugins-memory-checks
+    - sensu-plugins-cpu-checks
+  #  - sensu-plugins-network-checks
+    - sensu-plugins-chrony
+    - sensu-plugins-snmp
+    - sensu-plugins-load-checks
+    - sensu-plugins-filenr
+    - sensu-plugins-influxdb
+    - sensu-plugins-mailer
+    - sensu-plugins-http
+    - sensu-plugins-nginx
+
+- name: Installing Sensu-network checks
+  command: /opt/sensu/embedded/bin/gem install sensu-plugins-network-checks
+
+- service:
+    name: sensu-server
+    state: restarted
+
+- service:
+    name: sensu-api
+    state: restarted
+
+- service:
+    name: sensu-client
+    state: restarted

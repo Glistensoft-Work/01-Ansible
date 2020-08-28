@@ -1,0 +1,73 @@
+---
+# tasks file for sensu
+- name: Add GPG key for Sensu-server
+  apt_key:
+    url: "https://sensu.global.ssl.fastly.net/apt/pubkey.gpg"
+    state: present
+
+- name: Add Sensu repository for Ubuntu 16
+  template:
+    src: sensu.ubuntu14.list
+    dest: /etc/apt/sources.list.d/sensu.list
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_release == "xenial"
+
+- name: Add Sensu repository for Ubuntu 16
+  template:
+    src: sensu.ubuntu14.list
+    dest: /etc/apt/sources.list.d/sensu.list
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_release == "trusty"
+
+- name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+  apt:
+    update_cache: yes
+#    cache_valid_time: 3600
+
+- name: Install Sensu-Core server
+  apt:
+    name: sensu 
+    state: present 
+
+- service:
+    name: sensu-server
+    state: started
+
+- service:
+    name: sensu-api
+    state: started
+
+- service:
+    name: sensu-client
+    state: started
+
+#- file:
+#    path: /etc/sensu/conf.d
+#    state: directory
+#    mode: 0755
+#
+#- name: Copy configuration files in conf.d 
+#  template: src={{ item.src }} dest={{ item.dest }}
+#  with_items:
+#    - { src: "api.json", dest: "/etc/sensu/conf.d/api.json" }
+#    - { src: "transport.json", dest: "/etc/sensu/conf.d/transport.json" }
+#    - { src: "redis.json", dest: "/etc/sensu/conf.d/redis.json" }
+#    - { src: "uchiwa.json", dest: "/etc/sensu/uchiwa.json" }
+#
+#
+#- name: Copy plugins to Sensu
+#  copy: src={{ item.src }} dest={{ item.dest }}
+#  with_items:
+#    - { src: "{{ playbook_dir }}/../roles/internal/sensu/templates/conf.d/", dest: "/etc/sensu/conf.d/" }
+#
+#- name: Installing Sensu Plugin
+#  command: sudo sensu-install -p {{ item }}
+#  with_items:
+#    - sensu-plugins-disk-checks
+#    - sensu-plugins-memory-checks
+#    - sensu-plugins-cpu-checks
+#    - sensu-plugins-network-checks
+#    - sensu-plugins-ntp
+#    - sensu-plugins-snmp
+#    - sensu-plugins-load-checks
+#    - sensu-plugins-mysql
+#    - sensu-plugins-filenr
+#    - sensu-plugin-influxdb

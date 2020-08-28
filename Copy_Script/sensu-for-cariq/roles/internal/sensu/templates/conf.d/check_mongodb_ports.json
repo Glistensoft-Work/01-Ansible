@@ -1,0 +1,14 @@
+{
+  "checks": {
+     "check_mongo_ports": {
+        "command": "check-ports.rb -H :::address::: -p27017",
+        "handlers": ["default","mailer"],
+        "subscribers": [
+           "check-mongo-ports"
+              ],
+        "interval": 5,
+        "occurances": 20
+      }
+  }
+}
+

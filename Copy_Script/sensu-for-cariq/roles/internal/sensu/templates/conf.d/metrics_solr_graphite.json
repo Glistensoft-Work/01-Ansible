@@ -1,0 +1,13 @@
+{
+  "checks": {
+     "metrics_solr_graphite": {
+        "command": "metrics-solr-graphite.rb",
+        "handlers": ["default","influxdb"],
+        "subscribers": [
+           "metrics-solr-graphite"
+              ],
+        "interval": 60,
+        "occurances": 20
+      }
+  }
+}

@@ -1,0 +1,140 @@
+---
+ - hosts: copy-server
+   gather_facts: True
+   become: True
+   become_method: sudo
+   vars:
+     - ssh_key_filename: id_rsa
+   tasks:
+    - ping:
+
+    - name: check .ssh local directory exists
+      stat:
+        path: "~/.ssh"
+      register: ssh_directory_exists_check
+
+    # - debug:
+    #     var: ssh_directory_exists_check
+
+    - name: Check needed OS tools exist
+      shell: which sshpass ssh-keygen ssh-copy-id
+      register: os_tools_exist
+    #  ignore_errors: true
+
+    - name: Fail execution if any of the needed OS tools is missing
+      fail:
+        msg: "One or more of the: sshpass, ssh-keygen, ssh-copy-id are missing on this machine. Please install them - using your distribution's recommended method - before continuing."
+      when: os_tools_exist.rc != 0
+
+    - name: check .ssh key file exists
+      stat:
+        path: "~/.ssh/{{item}}"
+      register: ssh_key_file_exists_check
+      with_items:
+        - "{{ssh_key_filename}}"
+        - "{{ssh_key_filename}}.pub"
+    
+    #- name: Fail execution if public key  is missing
+     # fail:
+     #   msg: "Public key is missing .run ssh-keygen command to generate public key."
+     # when: ssh_key_file_exists_check
+
+    - name: Copy publick key file from remote to host 
+      fetch:
+        src:  ~/.ssh/id_rsa.pub
+        dest: /root/devops-directory/
+        #flat: yes
+
+
+ - hosts: copy-client
+   gather_facts: True
+   
+   tasks:
+    - ping:
+
+     #- name: Create file
+     # command: touch /path/to/file
+     # args:
+     #   creates: /path/to/file
+
+
+
+    - name: Register authorized keys in avaribale  
+      stat: path=/root/.ssh/authorized_keys
+      register: p
+
+    - name: create authorized file if not exits 
+      file: path=/root/.ssh/authorized_keys
+         owner=root
+         state={{ "file" if  p.stat.exists else "touch"}}
+
+    - name: Execute the command to get the public key 
+      command: "cat /root/devops-directory/id_rsa.pub"
+      register: command_output
+    - debug: msg="{{command_output.stdout}}"
+
+    - name: Execute the command to get the authorized key if exits 
+      command: "cat /root/.ssh/authorized_keys"
+      register: command_output1
+    - debug: msg="{{command_output1.stdout}}"
+
+
+      #not using the marker make the ansible to use default marker used 
+    - name: insert public ssh key for user root
+      blockinfile:
+         #state: present
+         insertafter: EOF 
+         path: /root/.ssh/authorized_keys
+         marker: "  "
+         block: |
+                  {{command_output.stdout}}
+
+    - name: insert public ssh key for user root
+      blockinfile:
+         #state: absent
+         insertafter: EOF  
+         path: /root/.ssh/authorized_keys
+         marker: " "                             #"#--------------- Ansible ----------- "       #use marker to differentiate the block and to avaoid override 
+         block: |    
+                 hello
+
+    #- name: Execute the command to get the public key 
+    #  command: "cat /root/devops-directory/id_rsa.pub >> /root/.ssh/authorized_keys"
+    
+ - hosts: copy-client
+   gather_facts: false
+  
+   tasks:
+     - name: check ssh to remote hosts works
+       shell: "hostname; id"
+       register: ssh_connection_test
+       failed_when: ssh_connection_test.rc != 0
+
+     - name: print the connectivity test results
+       debug:
+         var: ssh_connection_test.stdout_lines
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

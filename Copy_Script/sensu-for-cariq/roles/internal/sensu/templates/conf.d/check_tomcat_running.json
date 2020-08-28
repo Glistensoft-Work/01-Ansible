@@ -1,0 +1,16 @@
+{
+  "checks": {
+    "check_tomcat_running": {
+       "host": "soft-admin",
+       "command": "check-ports.rb -H :::address::: -p8080",
+       "handlers": ["default","mailer"],
+       "subscribers": [
+            "check-tomcat-running"
+        ],
+       "interval": 60,
+       "occurances": 20
+   }
+}
+}
+
+

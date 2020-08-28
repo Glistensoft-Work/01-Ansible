@@ -1,0 +1,10 @@
+{
+  "name":"sensu",
+  "type":"influxdb",
+  "url":"http://localhost:8086",
+  "access":"proxy",
+  "password":"root",
+  "user":"root",
+  "database":"sensu",
+  "isDefault":true
+}

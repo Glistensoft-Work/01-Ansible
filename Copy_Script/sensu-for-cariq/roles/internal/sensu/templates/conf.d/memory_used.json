@@ -1,0 +1,18 @@
+{
+  "checks": {
+    "met_memory_used": {
+        "type": "metric",
+       "command": "metrics-memory.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-memory-used"
+        ],
+       "interval": 60,
+       "occurances": 20
+   }
+}
+}
+
+
+
+

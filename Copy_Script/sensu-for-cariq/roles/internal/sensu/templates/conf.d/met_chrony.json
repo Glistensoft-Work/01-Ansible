@@ -1,0 +1,18 @@
+
+{
+  "checks": {
+    "met_chrony": {
+	"type": "metric",
+       "command": "metrics-chrony.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-chrony"
+        ],
+       "interval": 5,
+       "occurances": 20
+   }
+}
+}
+
+
+

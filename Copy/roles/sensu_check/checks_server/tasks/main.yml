@@ -1,0 +1,139 @@
+---
+   - ping:
+   - name: Ensure Sensu directory exists
+     file:
+      dest: "/etc/sensu"
+      state: directory
+      #owner: root
+      #group: root
+
+   - name: Ensure local directories exist
+     file:
+      state: directory
+      dest: "/etc/sensu/{{ item }}"
+     delegate_to: localhost
+     become: no
+     run_once: true
+     loop:
+       - checks
+       - filters
+       - handlers
+       - mutators
+       - definitions
+       - client_definitions
+       - client_templates
+
+   - name: Display paths of all .sh files in dir
+     debug: msg={{ lookup('fileglob', '/opt/sensu/embedded/bin/*.sh') }}
+
+   - name: Copy each file over that matches the given pattern if exist ovewrite it 
+     copy:
+       src: "{{ item }}"
+       dest: "/opt/sensu/embedded/bin"
+       owner: "root"
+       mode: 0744
+       follow: yes
+     with_fileglob:
+        - "/opt/sensu/embedded/bin/*.sh"
+
+   - name: Display paths of crawler files in dir
+     debug: msg={{ lookup('fileglob', '/opt/sensu/embedded/bin/crawler') }}
+
+   - name: Copy crawler file over that matches the given pattern if exist ovewrite it 
+     copy:
+       src: /opt/sensu/embedded/bin/crawler
+       dest: /opt/sensu/embedded/bin
+       #remote_src: yes
+       owner: "root"
+       mode: 0744
+       follow: yes
+    # with_fileglob:
+    #  - "/opt/sensu/embedded/bin/crawler*"
+  
+ 
+
+   - name: Find name of all the files 
+     find:
+        paths: "/opt/sensu/embedded/bin"
+        file_type: file
+        recurse: no
+        patterns: "^.*?\\.(?:sh)$"
+        use_regex: yes
+     register: tmp_dirs
+
+   - set_fact:  dir_names="{{ dir_names+ [item['path']] }}"
+     no_log: True
+     with_items:
+        - "{{ tmp_dirs['files'] }}" 
+   - debug: var=dir_names
+
+   - name: Register available checks
+     local_action: command ls {{ static_data_store }}/sensu/conf.d
+     register: sensu_available_checks
+     changed_when: false
+
+
+   - name: sensu checks defination for verfications
+     with_items: "{{ dir_names }}"
+     sensu_check:
+      name: "{{ item | basename }}"
+      command: check-verification.sh 10.5.0.12 10.5.0.10
+      handlers: 
+        - mailer
+        - slack
+        - default 
+      subscribers: "{{ item | basename }}"
+      interval: 30
+      #occurrences: 10
+
+   - name: sensu checks defination for crawler
+     sensu_check:
+      name: "crawler"
+      command: crawler  10.5.0.12
+      handlers: 
+        - mailer
+        - slack
+        - default 
+      subscribers: crawler
+      interval: 30
+      occurrences: 5
+
+ 
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+#- hosts: copy-client
+#  gather_facts: false
+#  become : true
+#  become_user: root
+#  vars:
+#    http_port: 80
+#    dir_names: []
+#    static_data_store: /etc 
+
+#  tasks:
+ 
+
+  #- name: Deploy check plugins
+  #  copy:
+  #    src: "{{ static_data_store }}/sensu/checks/{{ item }}/"
+  #    dest: "{{ sensu_config_path }}/plugins/"
+  #    mode: 0755
+  #    owner: "{{ sensu_user_name }}"
+  #    group: "{{ sensu_group_name }}"
+  #  when: "'{{ item }}' in sensu_available_checks.stdout_lines"
+  #  loop: "{{ group_names|flatten }}"
+  #  notify: restart sensu-client service
+
+

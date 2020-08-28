@@ -1,0 +1,5 @@
+---
+# handlers file for sensu-client
+- name: restart sensu client daemons
+  service: name=sensu-client state=restarted
+

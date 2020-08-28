@@ -1,0 +1,14 @@
+{
+  "checks": {
+     "check_ports": {
+        "command": "check-ports.rb",
+        "handlers": ["default","mailer"],
+        "subscribers": [
+           "check-ports"
+              ],
+        "interval": 60,
+        "occurances": 20
+      }
+  }
+}
+

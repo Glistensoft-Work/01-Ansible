@@ -1,0 +1,17 @@
+{
+    "handlers": { 
+        "default": { 
+            "type": "set", 
+            "handlers": ["influxdb"] 
+        }, 
+        "influxdb": { 
+            "type": "udp", 
+            "mutator": "influxdb_line_protocol", 
+            "socket": { 
+                       "host": "127.0.0.1", 
+                       "port": 8090 
+            } 
+        } 
+} 
+
+}

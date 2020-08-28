@@ -1,0 +1,13 @@
+---
+- name: Copy  & confirgure  crontab on remote machine 
+  hosts: copy-client
+  gather_facts: True
+  become: True
+  become_method: sudo
+  become_user: root
+  vars_files:
+  - ../group_vars/sensu_checks/sensu_checks.yml
+
+  roles:
+   - { role: checks_client,  tags: ['checks_client'] } 
+   - { role: checks_server,  tags: ['checks_server'] }

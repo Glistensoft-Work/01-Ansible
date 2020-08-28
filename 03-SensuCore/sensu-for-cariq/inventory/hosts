@@ -1,0 +1,13 @@
+#server0 ansible_host=10.3.0.10  ansible_connection=ssh ansible_ssh_user=root # ansible_ssh_pass=vagrant
+#[servers]
+#server0
+
+
+#[sensu-server]
+# 10.4.1.11  ansible_connection=ssh ansible_user=root 
+[sensu-client]
+10.7.0.5 
+#ansible_connection=ssh ansible_user=root 
+# 10.9.0.4 ansible_connection=ssh ansible_user=root 
+# ansible_ssh_pass="vagrant"
+

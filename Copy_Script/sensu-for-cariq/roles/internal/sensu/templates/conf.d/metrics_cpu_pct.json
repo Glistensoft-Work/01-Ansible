@@ -1,0 +1,19 @@
+
+{
+  "checks": {
+    "met_cpu_percentage": {
+        "type": "metric",
+       "command": "metrics-cpu-pcnt-usage.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-cpu-pct"
+        ],
+       "interval": 120,
+       "occurances": 20
+   }
+}
+}
+
+
+
+

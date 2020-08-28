@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "met_socket": {
+	"type": "metric",
+       "command": "metrics-sockstat.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+          "met-socket"
+            ],
+       "interval": 60,
+       "occurances": 20
+    }
+  }
+}
+

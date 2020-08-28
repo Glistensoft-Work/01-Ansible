@@ -1,0 +1,12 @@
+---
+mysql_host: localhost
+mysql_port: 3306
+mysql_username: root      
+mysql_passwd: password
+mysql_database: database
+mysql_socket: /var/run/mysqld/mysqld.sock
+mongo_host: localhost
+mongo_port: 27017
+mongo_username: root
+mongo_passwd: password
+mongo_database: database

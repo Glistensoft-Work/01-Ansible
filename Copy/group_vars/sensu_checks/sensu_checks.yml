@@ -1,0 +1,5 @@
+---
+http_port: 80
+dir_names: []
+static_data_store: /etc
+

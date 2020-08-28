@@ -1,0 +1,42 @@
+{
+   "client": {
+      "name": "{{ansible_hostname}}",
+         "address": "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}",
+         "subscriptions": [
+                    "check-cpu",
+                    "met-cpu",
+                    "met-cpu-pct",
+
+                    "check-load",
+                    "met-load",
+
+                    "check-disk",
+                    "met-disk",
+
+                    "check-memory",
+                    "met-memory",
+                    "met-memory-used",
+                    "met-memory-percent",
+
+                    "check-ports",
+                    "check-met-netstat",
+                    "check-met-netif",
+                    "met-socket",
+                    "check-met-net",
+                    "met-interface",
+
+                    "check-ntp",
+                    "met-ntpstats",
+
+                    "check-FileDescriptor",
+
+                    "check-snmp",
+                    "met-snmp",
+
+		    "met-solr-v1.4graphite",
+                    "met-solr-graphite",
+		    "met-solr4-graphite"	
+       ]
+   }
+}
+

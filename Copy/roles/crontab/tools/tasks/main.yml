@@ -1,0 +1,113 @@
+--- 
+
+#- hosts: copy-client        #client hots 
+#  gather_facts: false
+#  become : true 
+#  become_user: root
+#  vars:
+#    dir_names: []
+
+#  tasks:
+   - debug: msg="crontab in includeFile"
+     tags:
+       - crontab
+
+   - ping:
+
+   - name: Ansible check directory.
+     stat:
+      path: /root/devops-directory/ 
+     register: my_folder
+ 
+   - name: echo if directory already existed
+     debug:
+       msg: "the devops-directory directory is already existed"
+     when: my_folder.stat.exists
+ 
+   - name: Ansible Create directory if not exists
+     file:
+      path: /root/devops-directory
+      state: directory
+      mode: "u=rwx,g=rx,o=rx"
+      group: root
+      owner: root
+     when: my_folder.stat.exists == false
+
+   - name: Display paths of all .sh files in dir
+     debug: msg={{ lookup('fileglob', '/root/devops-directory/*.sh') }}
+
+   - name: Copy each file over that matches the given pattern if exist ovewrite it 
+     copy:
+       src: "{{ item }}"
+       dest: "/root/devops-directory/"
+       owner: "root"
+       mode: 0600
+       follow: yes
+     with_fileglob:
+        - "/root/devops-directory/*.sh"
+
+
+  #- name: Check that the files existance  
+  #    stat:
+  #     path: "/root/deveops-directory/Test.sh" 
+       #patterns: "^.*?\\.(?:sh)$"
+       #use_regex: yes
+     #register: stat_result
+  
+   #- name: Create the file, if it doesnt exist already
+    # file:
+     # path: /root/devops-directory/Test.sh 
+      #state: touch
+    # when: stat_result.stat.exists == False
+    
+   #- name: Transfer file from ServerA to ServerB if not exists
+    # copy:
+      #src: /root/devops-directory/
+      #dest: /root/devops-directory/ 
+      #follow: yes
+        #remote_dest: yes
+      #delegate_to: copy-server
+  
+   - find:
+        paths: "/root/devops-directory/"
+        file_type: file
+        recurse: no
+        patterns: "^.*?\\.(?:sh)$"
+        use_regex: yes
+     register: tmp_dirs
+
+   - set_fact:  dir_names="{{ dir_names+ [item['path']] }}"
+     #no_log: True
+     with_items:
+        - "{{ tmp_dirs['files'] }}" 
+   - debug: var=dir_names
+
+   #- name: Stop services
+     #with_items: "{{ dir_names }}"
+     #shell: "/webapps/scripts/stopService.sh {{item | basename }}"
+   
+   - name: Creates a cron file under /etc/cron.d
+     cron:
+      #name: yum autoupdate
+      weekday: "2"
+      minute: "0"
+      hour: "12"
+      user: root
+      state: absent
+      #job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
+      cron_file: ansible_yum-autoupdate
+
+
+   - name: Creates a cron file under /etc/cron.d 
+     with_items: "{{ dir_names }}"
+     cron:
+      name: "{{ item | basename }}"
+      weekday: "0"
+      minute: "1"
+      hour: "0"
+      user: root
+      state: present
+      backup: yes
+      job: "/bin/sh {{item | basename }}"
+      #cron_file: hello
+

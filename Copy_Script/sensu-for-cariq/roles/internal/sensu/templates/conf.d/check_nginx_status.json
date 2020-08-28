@@ -1,0 +1,13 @@
+{
+  "checks": {
+     "check_nginx_status": {
+        "command": "check-nginx-status.rb",
+        "handlers": ["default","mailer"],
+        "subscribers": [
+           "check-nginx-status"
+              ],
+        "interval": 60,
+        "occurances": 20
+      }
+  }
+}

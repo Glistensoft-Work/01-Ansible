@@ -1,0 +1,18 @@
+
+{
+  "checks": {
+    "met_pro_stat": {
+	"type": "metric",
+       "command": "metrics-process-status.rb",
+       "handlers": ["default","influxdb"],
+       "subscribers": [
+            "met-pro-stat"
+        ],
+       "interval": 60,
+       "occurances": 20
+   }
+}
+}
+
+
+

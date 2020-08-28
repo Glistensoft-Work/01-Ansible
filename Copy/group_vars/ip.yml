@@ -1,0 +1,6 @@
+sensu_server_ip: 172.18.200.103  #Need to add private IP of Sensu Server
+uchiwa_username: uchiwa-admin
+uchiwa_password: uchiwa@123
+
+
+

@@ -1,0 +1,53 @@
+---
+
+- name: enable epl release
+  yum: 
+    name: epel-release
+    state: present
+  become: true
+  tags:
+  - epl
+
+#- name: update centos
+#  command: sudo yum -y update
+
+
+- name: Install python
+  yum: 
+       name: python 
+       state: present
+  tags:
+  - python.rh
+
+- name: install java
+  yum: name=java-1.8.0-openjdk state=latest update_cache=yes
+  tags:
+  - java8.rh
+
+
+- name: install basic tools on RH
+  yum: package={{item}} state=installed
+  with_items:
+    - unzip
+    - net-tools
+    - vim 
+    - wget
+    - sysstat
+    - telnet
+    - htop    
+    - python-pip 
+    - net-snmp
+    - net-snmp-utils
+    - chrony
+    - sysstat
+    - gcc-c++
+    - chrony
+    - libselinux-python
+  tags:
+  - basic.rh
+
+- selinux:
+    policy: targeted
+    state: disabled
+  tags:
+  - selinux

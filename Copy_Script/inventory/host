@@ -1,0 +1,7 @@
+[copy-server]
+172.18.200.103
+[copy-client]
+#172.18.200.196
+#172.18.200.196 ansible_connection=ssh ansible_ssh_user=vagrant ansible_ssh_pass=vagrant
+10.6.0.4
+

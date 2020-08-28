@@ -1,0 +1,14 @@
+{
+  "checks": {
+      "check_FD": {
+        "command": "check-filenr.rb",
+        "handlers": ["defaults","mailer"],
+        "subscribers": [
+            "check-FileDescriptor"
+          ],
+        "interval": 60,
+        "occurances": 20
+   }
+ }
+}
+

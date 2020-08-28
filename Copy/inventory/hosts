@@ -1,0 +1,13 @@
+[copy-server]
+172.18.200.103
+
+[copy-client]
+#172.18.200.194 ansible_connection=ssh ansible_ssh_user=root ansible_ssh_pass=vagrant
+172.18.200.194 ansible_connection=ssh ansible_ssh_user=root ansible_ssh_pass=vagrant 
+#ansible_ssh_private_key_file= ~/.ssh/id_rsa
+#--private-key ~/.ssh/id_rsa
+
+
+[localhost]
+172.18.200.103 ansible_connection=ssh ansible_ssh_user=root ansible_ssh_pass=vagrant 
+

@@ -1,0 +1,1 @@
+sensu_server_ip: 192.168.0.105 #Need to add private IP of Sensu Server
